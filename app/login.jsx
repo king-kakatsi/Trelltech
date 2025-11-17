@@ -1,54 +1,30 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
 
   const handleLogin = () => {
-    // Redirect to tabs (TODO: change)
     router.replace('/(tabs)');
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Redech</Text>
-      <Text style={styles.subtitle}>Reddit Client</Text>
+    <View className="flex-1 justify-center items-center bg-[#1a1a1b] px-5">
+      <Text className="text-5xl font-bold text-[#33977D] mb-2.5">
+        Mobimobilo
+      </Text>
+      <Text className="text-xl text-[#818384] mb-12">
+        Trello Client
+      </Text>
       
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Sign in with Reddit</Text>
+      <TouchableOpacity 
+        className="bg-[#33977D] px-10 py-4 rounded-3xl active:opacity-80"
+        onPress={handleLogin}
+      >
+        <Text className="text-white text-base font-bold">
+          Sign in with Trello
+        </Text>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1a1a1b',
-    padding: 20,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#FF4500',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 20,
-    color: '#818384',
-    marginBottom: 50,
-  },
-  button: {
-    backgroundColor: '#FF4500',
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 25,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
