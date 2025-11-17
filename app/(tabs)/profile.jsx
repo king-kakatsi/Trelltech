@@ -1,61 +1,52 @@
+import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    router.replace('/login');
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/(auth)/login');
   };
 
   return (
-    <View className="flex-1 bg-[#1a1a1b] p-4">
-      <View className="items-center py-8 border-b border-[#343536] mb-5">
-        <View className="w-20 h-20 rounded-full bg-[#33977D] justify-center items-center mb-4">
-          <Text className="text-3xl font-bold text-white">
-            U
+    <View className="flex-1 bg-[#1a1a1a]">
+      {/* Header */}
+      <View className="bg-[#2a2a2a] px-4 pt-12 pb-6 border-b border-gray-700">
+        <Text className="text-2xl font-bold text-white">
+          Profile
+        </Text>
+      </View>
+
+      {/* Content */}
+      <View className="p-6">
+        {/* Avatar and user info */}
+        <View className="bg-[#2a2a2a] rounded-2xl p-6 items-center mb-6">
+          <View className="w-24 h-24 rounded-full bg-[#0079BF] items-center justify-center mb-4">
+            <Text className="text-white text-4xl font-bold">
+              {user?.fullName?.[0]?.toUpperCase() || 'U'}
+            </Text>
+          </View>
+          <Text className="text-xl font-bold text-white mb-1">
+            {user?.fullName || 'User'}
+          </Text>
+          <Text className="text-gray-400">
+            {user?.email || 'user@example.com'}
           </Text>
         </View>
-        <Text className="text-2xl font-bold text-white mb-1">
-          u/YourUsername
-        </Text>
-        <Text className="text-base text-[#818384]">
-          1 karma
-        </Text>
-      </View>
 
-      <View className="mb-8">
-        <Text className="text-lg font-bold text-white mb-4">
-          Account Settings
-        </Text>
-        
-        <TouchableOpacity className="flex-row justify-between items-center bg-[#272729] p-4 rounded-xl mb-2.5 border border-[#343536]">
-          <Text className="text-base text-white">
-            Nightmode
+        {/* Logout button */}
+        <Pressable
+          onPress={handleLogout}
+          className="bg-[#EB5A46] py-4 rounded-xl active:opacity-80"
+        >
+          <Text className="text-white text-center font-semibold text-lg">
+            Logout
           </Text>
-          <Text className="text-base text-[#33977D] font-bold">
-            ON
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity className="flex-row justify-between items-center bg-[#272729] p-4 rounded-xl mb-2.5 border border-[#343536]">
-          <Text className="text-base text-white">
-            Show NSFW content
-          </Text>
-          <Text className="text-base text-[#33977D] font-bold">
-            OFF
-          </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
-
-      <TouchableOpacity 
-        className="bg-[#33977D] p-4 rounded-xl items-center mt-auto active:opacity-80"
-        onPress={handleLogout}
-      >
-        <Text className="text-white text-base font-bold">
-          Logout
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 }

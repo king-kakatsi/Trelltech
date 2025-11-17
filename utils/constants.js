@@ -1,10 +1,18 @@
-export const REDDIT_CONFIG = {
-  CLIENT_ID: 'dQw4w9WgXcQ', // TODO: REMPLACE real my Client ID
-  REDIRECT_URI: 'exp://192.168.1.123:8081', // TODO: REMPLACE by my IP
-  RESPONSE_TYPE: 'token',
-  SCOPE: 'identity read subscribe mysubreddits',
-  STATE: 'random_string_12345',
+export const TRELLO_CONFIG = {
+  API_BASE_URL: 'https://api.trello.com/1',
+  API_KEY: 'YOUR_API_KEY_HERE',
+  APP_NAME: 'TrellTech',
+  OAUTH_CALLBACK: 'trelltech://oauth-callback',
+  SCOPES: 'read,write,account',
 };
 
-export const REDDIT_API_BASE = 'https://oauth.reddit.com';
-export const REDDIT_AUTH_URL = 'https://www.reddit.com/api/v1/authorize';
+export const COLORS = {
+  primary: '#0079BF',
+  secondary: '#5AAC44',
+  danger: '#EB5A46',
+  warning: '#F2D600',
+  dark: '#172B4D',
+  gray: '#6B778C',
+  lightGray: '#DFE1E6',
+  background: '#FAFBFC',
+};

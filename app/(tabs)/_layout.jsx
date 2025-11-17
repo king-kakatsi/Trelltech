@@ -5,33 +5,25 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#FF4500',
-        tabBarInactiveTintColor: '#818384',
+        headerShown: false,
+        tabBarActiveTintColor: '#0079BF',
+        tabBarInactiveTintColor: '#6B778C',
         tabBarStyle: {
-          backgroundColor: '#1a1a1b',
-          borderTopColor: '#343536',
+          backgroundColor: '#2a2a2a',
+          borderTopColor: '#3a3a3a',
         },
-        headerStyle: {
-          backgroundColor: '#1a1a1b',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
         },
-        headerTintColor: '#fff',
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Search',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />
@@ -40,7 +32,7 @@ export default function TabsLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />

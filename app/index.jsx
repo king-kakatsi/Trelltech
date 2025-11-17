@@ -1,26 +1,25 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
-import { ActivityIndicator, View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Index() {
-  const { userToken, isLoading } = useAuth();
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      if (userToken) {
-        router.replace('/(tabs)');
+      if (isAuthenticated) {
+        router.replace('/(tabs)/home');
       } else {
-        router.replace('/login');
+        router.replace('/(auth)/login');
       }
     }
-  }, [userToken, isLoading]);
+  }, [isAuthenticated, isLoading]);
 
   return (
-    <View className="flex-1 justify-center items-center bg-[#1a1a1b]">
-      <ActivityIndicator size="large" color="#FF4500" />
+    <View className="flex-1 bg-white items-center justify-center">
+      <ActivityIndicator size="large" color="#0079BF" />
     </View>
   );
-  
 }
