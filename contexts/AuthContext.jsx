@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveInLocalStorage, fetchFromLocalStorage, removeFromLocalStorage } from '../services/localStorageService';
 import * as trelloService from '../services/trello';
 
 const AuthContext = createContext({});
@@ -14,32 +14,43 @@ export function AuthProvider({ children }) {
   }, []);
 
   const checkAuth = async () => {
-    try {
-      const savedToken = await AsyncStorage.getItem('trello_token');
-      if (savedToken) {
-        setToken(savedToken);
-        // Temporarily skip user fetch until real token is available
-        // const userData = await trelloService.getCurrentUser(savedToken);
-        // setUser(userData);
+    const savedToken = await fetchFromLocalStorage('trello_token');
+    
+    if (savedToken) {
+      setToken(savedToken);
+      
+      try {
+        const userData = await trelloService.getCurrentUser(savedToken);
+        setUser(userData);
+      } catch (error) {
+        console.log('Failed to get user, clearing token');
+        await removeFromLocalStorage('trello_token');
+        setToken(null);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-    } finally {
-      setIsLoading(false);
     }
+    
+    setIsLoading(false);
   };
 
   const login = async () => {
-    const newToken = await trelloService.authenticate();
-    await AsyncStorage.setItem('trello_token', newToken);
-    setToken(newToken);
-    // Temporarily skip user fetch
-    // const userData = await trelloService.getCurrentUser(newToken);
-    // setUser(userData);
+    try {
+      const newToken = await trelloService.authenticate();
+      console.log("\n\n\nDEBUG", newToken); // TODO: remove
+      await saveInLocalStorage('trello_token', newToken);
+      setToken(newToken);
+      
+      const userData = await trelloService.getCurrentUser(newToken);
+      setUser(userData);
+      
+      return true;
+    } catch (error) {
+      console.log('Login error:', error);
+      return false;
+    }
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem('trello_token');
+    await removeFromLocalStorage('trello_token');
     setToken(null);
     setUser(null);
   };

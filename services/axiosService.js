@@ -32,7 +32,7 @@ export function createAxiosInstance(
   });
 
   instance.interceptors.request.use((config) => {
-    const token = fetchFromLocalStorage('access_token');
+    const token = fetchFromLocalStorage('trello_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
