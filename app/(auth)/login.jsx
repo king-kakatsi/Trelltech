@@ -1,6 +1,6 @@
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginScreen() {
@@ -23,7 +23,7 @@ export default function LoginScreen() {
   return (
     <View className="flex-1 bg-white items-center justify-center p-6">
       <Text className="text-4xl font-bold text-[#0079BF] mb-4">
-        TrellTech
+        {process.env.EXPO_PUBLIC_APP_NAME || 'TrellTech'}
       </Text>
       <Text className="text-gray-600 text-center mb-8 text-base">
         Manage your projects with Trello

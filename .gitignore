@@ -47,3 +47,5 @@ _resource_1.md
 
 # files to not send
 *.file.md
+*.env
+Trash
