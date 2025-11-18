@@ -1,4 +1,5 @@
-import { View, Text } from 'react-native';
+import { View, Text } from "react-native-web";
+
 
 // export default function HomeScreen() {
 //   return (
@@ -36,6 +37,8 @@ export default function HomeScreen() {
         <Text className="text-white">Token: {token ? 'Saved' : 'Not saved'}</Text>
         <Text className="text-white">User: {user?.fullName || 'No user'}</Text>
       </View>
-    </View>
+      </View>
+    
+   
   );
 }
