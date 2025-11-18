@@ -122,7 +122,7 @@ trelltech/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/trelltech.git
+git clone git@github.com:EpitechCodingAcademyPromo2026/C-COD-290-COT-2-1-epicture-6.git
 cd trelltech
 
 # Install dependencies
@@ -392,25 +392,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Authors
 
-### Jocelyne Tossi
-- **Email**: jocelyne.tossi@epitech.eu
-- **WhatsApp**: +221 78 196 19 39
-- **Portfolio**: [jocelyne-tossi.linkedin](https://www.linkedin.com/in/jocelyne-benisse-tossi-8739701aa)
-
 ### Leroi Kakatsi
 - **Email**: leroi.kakatsi@epitech.eu
 - **WhatsApp**: +233 53 561 0908
 - **Portfolio**: [kingweb.pythonanywhere.com](https://kingweb.pythonanywhere.com)
 
-### Juppé-Styve Hagbe
-- **Email**: juppe-styve.hagbe@epitech.eu
-- **WhatsApp**: +229 01 90 02 68 93
-- **LinkedIn**: [styve-hagbe.linkedIn](https://www.linkedin.com/in/styve-hagbe-261254236)
+### Joel Houinsavi
+- **Email:** joel.houinsavi@epitech.eu
+- **WhatsApp:** +229 01 97 70 38 37
+- **Portfolio:** [www.paqo.net](https://paqo.net/Auteur)
 
-### Benedicte Gantin
-- **Email**: benedicte.gantin@epitech.eu
-- **WhatsApp**: +229 01 52 14 98 69
-- **Portfolio**: [benedicte-gantin.linkedin](https://www.linkedin.com/in/bénédicte-gantin-038383283)
+### Regina Dokponou
+- **Email**: regina.dokponou@epitech.eu
+- **WhatsApp**: +221 01 94 42 82 15
+- **Portfolio**: [regina-dokponou.linkedin](https://www.linkedin.com/in/regina-dokponou-61a343312)
+
+### Waren Konnon
+- **Email**: waren.konnon@epitech.eu
+- **WhatsApp**: +229 01 61 62 32 32
+- **Portfolio**: [waren-konnon.linkedin](https://www.linkedin.com/in/waren-konnon-651095310)
 
 ## Acknowledgments
 
@@ -419,6 +419,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - React Native community
 - NativeWind for TailwindCSS integration
 
----
 
-**Built with care by [Your Team Name]**
+**Built with care by Mobomobilo team**

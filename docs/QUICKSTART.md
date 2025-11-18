@@ -60,7 +60,7 @@ Choose your platform:
 
 That's it! TrellTech should now be running.
 
----
+
 
 ## Running on Different Platforms
 
@@ -115,7 +115,7 @@ npx expo start --android
 
 4. **App opens in Expo Go** - Ready to use!
 
----
+
 
 ## Development Workflow
 
@@ -155,7 +155,7 @@ npx expo start
 npx expo start | grep "ERROR"
 ```
 
----
+
 
 ## Quick Testing Checklist
 
@@ -187,7 +187,7 @@ After starting the app, verify these features work:
 - [ ] Opens card detail screen
 - [ ] See description and comments
 
----
+
 
 ## Common Quick Fixes
 
@@ -243,7 +243,7 @@ cd ..
 npx expo start --android
 ```
 
----
+
 
 ## Quick Commands Reference
 
@@ -272,7 +272,7 @@ npx expo doctor
 npx expo start --dev-client
 ```
 
----
+
 
 ## Keyboard Shortcuts (in Terminal)
 
@@ -287,7 +287,7 @@ While `npx expo start` is running:
 - **`c`** - Clear cache
 - **`?`** - Show all commands
 
----
+
 
 ## Development Tips
 
@@ -332,7 +332,7 @@ console.log('Debug:', variable);
 // Press 'm' in terminal > "Open React DevTools"
 ```
 
----
+
 
 ## What's Next?
 
@@ -359,7 +359,7 @@ Now that TrellTech is running:
    - Check [GitHub Issues](https://github.com/yourusername/trelltech/issues)
    - Contact team members
 
----
+
 
 ## Getting Help
 
@@ -375,6 +375,6 @@ Now that TrellTech is running:
 - [Expo Router Guide](https://docs.expo.dev/router/introduction/)
 - [NativeWind Docs](https://www.nativewind.dev/)
 
----
+
 
 Happy coding! 

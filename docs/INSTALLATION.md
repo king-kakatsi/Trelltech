@@ -8,7 +8,7 @@ Before you begin, ensure you have the following installed:
 
 ### Required Software
 
-- **Node.js** 18.x or higher ([Download](https://nodejs.org/))
+- **Node.js** 20.x or higher ([Download](https://nodejs.org/))
 - **npm** 9.x or higher (comes with Node.js)
 - **Git** ([Download](https://git-scm.com/))
 - **Watchman** (Mac only, recommended) ([Installation](https://facebook.github.io/watchman/docs/install))
@@ -25,6 +25,8 @@ Before you begin, ensure you have the following installed:
 - **Android SDK** (included with Android Studio)
 - **Android Emulator** (configured in Android Studio)
 - **Java Development Kit (JDK)** 11 or higher
+
+You can still use VsCode with expo to run the app
 
 ### Verify Prerequisites
 
@@ -49,13 +51,11 @@ java -version   # Should be 11 or higher
 
 ```bash
 # Using HTTPS
-git clone https://github.com/yourusername/trelltech.git
+git clone https://github.com/EpitechCodingAcademyPromo2026/C-COD-290-COT-2-1-epicture-6.git
 
 # Or using SSH
-git clone git@github.com:yourusername/trelltech.git
+git clone git@github.com:EpitechCodingAcademyPromo2026/C-COD-290-COT-2-1-epicture-6.git
 
-# Navigate to project directory
-cd trelltech
 ```
 
 ## Step 2: Install Dependencies
@@ -115,89 +115,8 @@ export const APP_CONFIG = {
 5. Click "Generate a Token" to get your **Token**
 6. Add these to `constants/config.js`
 
-## Step 5: iOS Setup (Mac Only)
 
-### Install CocoaPods
-
-```bash
-# Install CocoaPods
-sudo gem install cocoapods
-
-# Navigate to iOS directory
-cd ios
-
-# Install iOS dependencies
-pod install
-
-# Go back to project root
-cd ..
-```
-
-### Configure Xcode
-
-1. Open Xcode
-2. Go to Preferences > Locations
-3. Select Command Line Tools version
-4. Close Xcode
-
-### Open iOS Simulator
-
-```bash
-# List available simulators
-xcrun simctl list devices
-
-# Open default simulator
-open -a Simulator
-```
-
-## Step 6: Android Setup
-
-### Install Android Studio
-
-1. Download and install Android Studio
-2. Open Android Studio
-3. Go to Settings/Preferences > Appearance & Behavior > System Settings > Android SDK
-4. Install the following:
-   - Android SDK Platform 33 (or latest)
-   - Android SDK Build-Tools
-   - Android SDK Platform-Tools
-   - Android Emulator
-
-### Configure Environment Variables
-
-Add to your shell configuration file (`~/.bash_profile`, `~/.zshrc`, etc.):
-
-```bash
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-```
-
-Apply changes:
-```bash
-source ~/.zshrc  # or ~/.bash_profile
-```
-
-### Create Android Virtual Device (AVD)
-
-1. Open Android Studio
-2. Tools > Device Manager
-3. Create Virtual Device
-4. Select a device (e.g., Pixel 5)
-5. Select a system image (API 33 recommended)
-6. Finish setup
-
-### Start Android Emulator
-
-```bash
-# List available emulators
-emulator -list-avds
-
-# Start emulator
-emulator -avd Pixel_5_API_33
-```
-
-## Step 7: Start Development Server
+## Step 5: Start Development Server
 
 ```bash
 # Start Expo development server
@@ -211,8 +130,9 @@ You should see a QR code and options to:
 - Press `i` for iOS Simulator
 - Press `a` for Android Emulator
 - Press `w` for web (not fully supported)
+- Press `r` to hot reload
 
-## Step 8: Run on Simulator/Emulator
+## Step 6: Run on Simulator/Emulator
 
 ### iOS Simulator
 
@@ -232,7 +152,7 @@ npx expo start --android
 # Or press 'a' after running npx expo start
 ```
 
-## Step 9: Run on Physical Device
+## Step 7: Run on Physical Device
 
 ### Using Expo Go App
 
@@ -371,58 +291,6 @@ npx expo start -c
 3. Try connecting via LAN option in Expo Go
 4. Use tunnel mode: `npx expo start --tunnel`
 
-### Permission Issues (Mac)
-
-**EACCES errors**
-```bash
-# Fix npm permissions
-sudo chown -R $(whoami) ~/.npm
-sudo chown -R $(whoami) /usr/local/lib/node_modules
-```
-
-### Watchman Issues (Mac)
-
-**Watchman watch error**
-```bash
-# Reinstall watchman
-brew uninstall watchman
-brew install watchman
-```
-
-## Platform-Specific Setup
-
-### macOS Setup
-
-```bash
-# Install Homebrew (if not installed)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install Watchman
-brew install watchman
-
-# Install CocoaPods
-sudo gem install cocoapods
-```
-
-### Windows Setup
-
-1. Install Node.js from official website
-2. Install Android Studio
-3. Configure environment variables
-4. Use PowerShell or Command Prompt for commands
-
-### Linux Setup
-
-```bash
-# Install Node.js
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Install Watchman (optional)
-sudo apt-get install watchman
-
-# Install Android Studio from official website
-```
 
 ## Verification
 
