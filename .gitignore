@@ -44,3 +44,8 @@ app-example
 _resource.md
 _resource_1.md
 .vscode
+
+# files to not send
+*.file.md
+*.env
+Trash
