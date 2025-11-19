@@ -2,7 +2,7 @@ import * as AuthSession from 'expo-auth-session';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { TRELLO_CONFIG } from '../utils/constants';
-import { getFromApi } from './axiosService';
+import { getFromApi, updateWithApi } from './axiosService';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -58,6 +58,27 @@ export async function getCurrentUser(token) {
   const [success, data] = await getFromApi(endpoint); 
   if (success) return data;
   throw new Error('Failed to get user');
+}
+
+
+export async function updateCurrentUser(token, updates) {
+  const params = new URLSearchParams({
+    key: TRELLO_CONFIG.API_KEY,
+    token: token,
+  });
+  Object.keys(updates).forEach(key => {
+    params.append(key, updates[key]);
+  });
+
+  const endpoint = `/members/me?${params.toString()}`;
+  const [success, data] = await updateWithApi(
+    endpoint,
+    { ...updates, key: TRELLO_CONFIG.API_KEY, token },
+    { autoJoin: false }
+  );
+  if (success) return data; 
+  console.log('Update failed:', data);
+  throw new Error('Failed to update user');
 }
 
 export async function getWorkspaces(token) {

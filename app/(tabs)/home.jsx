@@ -28,11 +28,24 @@ import WorkspaceList from '../../components/home/WorkspaceList';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAllWorkspaces } from '../../services/workspaces';
 
+import { useRouter } from 'expo-router';
+import { fetchFromLocalStorage } from "../../services/localStorageService";
+
 export default function HomeScreen() {
   const { token, user } = useAuth();
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const router = useRouter();
+
+  useEffect(()=> {
+    const checkAuth = async () =>{
+      const savedToken = await fetchFromLocalStorage('trello_token');
+      if (!savedToken) router.push('/login');
+    }
+    checkAuth();
+  }, [])
 
   // fonction qui récupère les workspaces en utilisant le token fourni
   const fetchWorkspaces = async (currentToken) => {
