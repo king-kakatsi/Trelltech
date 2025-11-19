@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import KanbanView from '../../../../../components/Kanban';
 
 export default function BoardDetailScreen() {
   const { workspaceId, boardId } = useLocalSearchParams();
@@ -12,9 +13,9 @@ export default function BoardDetailScreen() {
       <Text className="text-gray-600 mt-2">
         Workspace: {workspaceId}
       </Text>
-      <Text className="text-gray-600 mt-1">
-        Board: {boardId}
-      </Text>
+      <View className="w-80 max-h-screen">
+        <KanbanView />
+      </View>
     </View>
   );
 }
