@@ -12,6 +12,7 @@ export default function WorkspaceList({ workspaces }) {
         <WorkspaceAccordion
           key={i}
         //   name={ws.name}
+          id={ws.id}
           name={ws.displayName}
           boards={ws.idBoards}
         />

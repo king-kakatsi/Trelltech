@@ -1,4 +1,4 @@
-import { Text, View } from "react-native-web";
+import { ScrollView, Text, View } from 'react-native';
 
 
 // export default function HomeScreen() {
@@ -23,7 +23,6 @@ import { Text, View } from "react-native-web";
 
 
 import { useEffect, useState } from 'react';
-import { ScrollView } from 'react-native';
 // import { View } from 'react-native-web';
 import WorkspaceList from '../../components/home/WorkspaceList';
 import { useAuth } from '../../contexts/AuthContext';

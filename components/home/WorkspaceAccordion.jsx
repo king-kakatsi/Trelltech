@@ -1,9 +1,10 @@
+import { Link } from 'expo-router';
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import BoardList from "./BoardList";
 
-export default function WorkspaceAccordion({ name, boards = [] }) {
+export default function WorkspaceAccordion({ id,name, boards = [] }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -15,6 +16,7 @@ export default function WorkspaceAccordion({ name, boards = [] }) {
         className="flex-row items-center justify-between px-3 py-2"
       >
         <View className="flex-row items-center gap-3">
+          <Link href={`workspace/${id}/boards`} className="">
           {/* Workspace Icon */}
           <View className="w-8 h-8 rounded-full bg-blue-200 items-center justify-center">
             <Text className="font-bold text-center">
@@ -23,7 +25,8 @@ export default function WorkspaceAccordion({ name, boards = [] }) {
           </View>
 
           {/* Workspace Name */}
-          <Text className="text-dark font-medium text-base">{name}</Text>
+          <Text className="">{name}</Text>
+          </Link>
         </View>
 
         {open ? (

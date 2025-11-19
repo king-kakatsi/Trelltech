@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView
-} from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import { getWorkspaceBoards } from '../../../services/boardService';
 
 export default function WorkspaceBoardsScreen() {
@@ -200,7 +200,7 @@ export default function WorkspaceBoardsScreen() {
   }
 
   return (
-    <View className="flex-1 bg-neutral-900">
+    <View className="flex-1 pt-10 bg-neutral-900">
       <Stack.Screen
         options={{
           title: workspaceName || 'Boards',
