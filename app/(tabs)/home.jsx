@@ -1,4 +1,4 @@
-import { View, Text } from "react-native-web";
+import { View, Text } from "react-native";
 
 
 // export default function HomeScreen() {
@@ -23,9 +23,22 @@ import { View, Text } from "react-native-web";
 
 
 import { useAuth } from '../../contexts/AuthContext';
+import { useEffect } from "react";
+import { fetchFromLocalStorage } from "../../services/localStorageService";
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
   const { token, user } = useAuth();
+  const router = useRouter();
+
+  useEffect(()=> {
+    const checkAuth = async () =>{
+      const savedToken = await fetchFromLocalStorage('trello_token');
+      if (!savedToken) router.push('/login');
+    }
+    checkAuth();
+  }, [])
+
 
   return (
     <View className="flex-1 bg-[#1a1a1a]">

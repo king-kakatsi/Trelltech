@@ -63,7 +63,8 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!token, 
         isLoading, 
         login, 
-        logout 
+        logout,
+        refetchUser: checkAuth,
       }}
     >
       {children}
