@@ -26,3 +26,31 @@ export const COLORS = {
   lightGray: '#DFE1E6',
   background: '#FAFBFC',
 };
+
+// export const COLORS = {
+//   primary: '#0079BF',
+//   primaryLight: '#4FA7D9',
+//   primaryDark: '#005C8F',
+
+//   secondary: '#5AAC44',
+//   secondaryLight: '#7BCB5F',
+//   secondaryDark: '#3F7F34',
+
+//   danger: '#EB5A46',
+//   dangerLight: '#FF7A6A',
+//   dangerDark: '#C43D30',
+
+//   warning: '#E5C600',
+//   warningLight: '#F0D43C',
+//   warningDark: '#C4A900',
+
+//   dark: '#172B4D',
+
+//   gray100: '#F4F5F7',
+//   gray200: '#EBECF0',
+//   gray300: '#DFE1E6',
+//   gray400: '#6B778C',
+//   gray500: '#42526E',
+
+//   background: '#FAFBFC',
+// }
