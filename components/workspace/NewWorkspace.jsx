@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { postBoard } from '../../services/workspaces';
 
 const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
   const [name, setName] = useState('');
@@ -21,11 +22,15 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
     }
     setIsSubmitting(true);
     try {
-      await onCreate({ name: name.trim(), description: description.trim() });
+      // await onCreate({ name: name.trim()});
+      const res =  await postBoard(name.trim())
       // réinitialiser puis fermer après création réussie
+      console.log(res);
+      
       setName('');
       setDescription('');
       onClose();
+      onCreate();
     } catch (err) {
       console.error('NewWorkspace create error:', err);
       Alert.alert('Erreur', 'Impossible de créer l\'espace de travail');
@@ -57,29 +62,16 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }} keyboardShouldPersistTaps="handled">
             {/* onStartShouldSetResponder empêche la fermeture du Modal quand on tape dans ce View */}
             <View onStartShouldSetResponder={() => true} className="absolute bottom-0 left-0 right-0 bg-[#2a2a2a] p-4 rounded-t-xl">
-              <Text className="text-white text-lg font-semibold mb-3">Nouveau workspace</Text>
+              <Text className="text-white text-lg font-semibold mb-3">New Workspace</Text>
 
               <View className="mb-3">
-                <Text className="text-sm text-gray-300 mb-1">Nom</Text>
+                <Text className="text-sm text-gray-300 mb-1">Name</Text>
                 <TextInput
                   value={name}
                   onChangeText={setName}
-                  placeholder="Nom de l'espace de travail"
+                  placeholder="Workspace name"
                   placeholderTextColor="#6B728C"
                   className="bg-[#1a1a1a] text-white px-3 py-2 rounded"
-                />
-              </View>
-
-              <View className="mb-4">
-                <Text className="text-sm text-gray-300 mb-1">Description (optionnel)</Text>
-                <TextInput
-                  value={description}
-                  onChangeText={setDescription}
-                  placeholder="Brève description"
-                  placeholderTextColor="#6B728C"
-                  className="bg-[#1a1a1a] text-white px-3 py-2 rounded"
-                  multiline
-                  numberOfLines={3}
                 />
               </View>
 
@@ -89,7 +81,7 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
                   disabled={isSubmitting}
                   className="flex-1 bg-[#1a1a1a] py-3 rounded-xl items-center justify-center"
                 >
-                  <Text className="text-white">Annuler</Text>
+                  <Text className="text-white">Cancel</Text>
                 </Pressable>
 
                 <Pressable
@@ -98,7 +90,7 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
                   className="flex-1 bg-[#0079BF] py-3 rounded-xl items-center justify-center"
                 >
                   <Text className="text-white font-semibold">
-                    {isSubmitting ? 'Création...' : 'Créer'}
+                    {isSubmitting ? 'Adding...' : 'Add'}
                   </Text>
                 </Pressable>
               </View>

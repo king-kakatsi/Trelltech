@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { View, Pressable, Animated, Dimensions, Platform, PanResponder, Keyboard } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, Keyboard, PanResponder, Platform, Pressable, View } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const DRAG_THRESHOLD = 100;
@@ -9,7 +8,7 @@ export default function BottomDrawer({ visible, onClose, children }) {
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const dragY = useRef(new Animated.Value(0)).current;
-  const keyboardHeight = useRef(new Animated.Value(0)).current;
+  const keyboardOffset = useRef(new Animated.Value(0)).current;
   
   const [shouldRender, setShouldRender] = useState(false);
 
@@ -41,13 +40,13 @@ export default function BottomDrawer({ visible, onClose, children }) {
     })
   ).current;
 
-  // Listen to keyboard events
+  // Keyboard listeners
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       (e) => {
-        Animated.spring(keyboardHeight, {
-          toValue: e.endCoordinates.height,
+        Animated.spring(keyboardOffset, {
+          toValue: -e.endCoordinates.height,
           useNativeDriver: true,
           tension: 50,
           friction: 8,
@@ -58,7 +57,7 @@ export default function BottomDrawer({ visible, onClose, children }) {
     const hideSubscription = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
       () => {
-        Animated.spring(keyboardHeight, {
+        Animated.spring(keyboardOffset, {
           toValue: 0,
           useNativeDriver: true,
           tension: 50,
@@ -76,7 +75,6 @@ export default function BottomDrawer({ visible, onClose, children }) {
   useEffect(() => {
     if (visible) {
       setShouldRender(true);
-      
       dragY.setValue(0);
       
       Animated.parallel([
@@ -93,7 +91,6 @@ export default function BottomDrawer({ visible, onClose, children }) {
         }),
       ]).start();
     } else if (shouldRender) {
-      // Dismiss keyboard when closing
       Keyboard.dismiss();
       
       Animated.parallel([
@@ -109,6 +106,7 @@ export default function BottomDrawer({ visible, onClose, children }) {
         }),
       ]).start(() => {
         setShouldRender(false);
+        keyboardOffset.setValue(0);
       });
     }
   }, [visible]);
@@ -143,7 +141,7 @@ export default function BottomDrawer({ visible, onClose, children }) {
           transform: [
             { translateY: translateY },
             { translateY: dragY },
-            { translateY: Animated.multiply(keyboardHeight, -1) } // Push up by keyboard height
+            { translateY: keyboardOffset }
           ],
         }}
         className="bg-[#2a2a2a] rounded-t-3xl px-6 py-6 pb-8"
