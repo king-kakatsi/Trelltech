@@ -3,6 +3,9 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import WorkspaceList from '../../components/home/WorkspaceList';
 import { useAuth } from '../../contexts/AuthContext';
+import CardDetails from '../../components/cards/CardDetails';
+import CardCreate from '../../components/cards/CardCreate';
+import CardUpdate from '../../components/cards/CardUpdate';
 
 import { useRouter } from 'expo-router';
 import OptionsModal from '../../components/home/OptionsModal';
