@@ -1,8 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
-
-import { Table } from "lucide-react-native";
 import Board from './Board';
+
 
 const BoardList = ({ boards = [] }) => {
     return (
@@ -10,9 +9,9 @@ const BoardList = ({ boards = [] }) => {
           {boards.map((b, index) => (
             <TouchableOpacity
               key={index}
-              className="flex-row items-center gap-3 py-2"
+              className="flex-row items-center gap-3"
             >
-              <Table size={18} color="#6B778C" />
+              {/* <Table size={18} color="#6B778C" /> */}
               {/* <Text className=" text-sm">{b}</Text> */}
               <Board id={b}  />
             </TouchableOpacity>
