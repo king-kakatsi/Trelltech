@@ -60,6 +60,27 @@ export async function getCurrentUser(token) {
 	throw new Error('Failed to get user');
 }
 
+
+export async function updateCurrentUser(token, updates) {
+  const params = new URLSearchParams({
+    key: TRELLO_CONFIG.API_KEY,
+    token: token,
+  });
+  Object.keys(updates).forEach(key => {
+    params.append(key, updates[key]);
+  });
+
+  const endpoint = `/members/me?${params.toString()}`;
+  const [success, data] = await updateWithApi(
+    endpoint,
+    { ...updates, key: TRELLO_CONFIG.API_KEY, token },
+    { autoJoin: false }
+  );
+  if (success) return data; 
+  console.log('Update failed:', data);
+  throw new Error('Failed to update user');
+}
+
 export async function getWorkspaces(token) {
 	const endpoint = `/members/me/organizations?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
 	const [success, data] = await getFromApi(endpoint);

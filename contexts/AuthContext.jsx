@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { saveInLocalStorage, fetchFromLocalStorage, removeFromLocalStorage } from '../services/localStorageService';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { fetchFromLocalStorage, removeFromLocalStorage, saveInLocalStorage } from '../services/localStorageService';
 import * as trelloService from '../services/trello';
 
 const AuthContext = createContext({});
@@ -63,7 +63,8 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!token, 
         isLoading, 
         login, 
-        logout 
+        logout,
+        refetchUser: checkAuth,
       }}
     >
       {children}
