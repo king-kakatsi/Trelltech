@@ -3,17 +3,19 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Pressable,
   RefreshControl,
   ScrollView,
-  Pressable,
-  Alert
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getWorkspaceBoards, createBoard } from '../../../services/boardService';
 import BottomDrawer from '../../../components/ui/BottomDrawer';
+import { createBoard, getWorkspaceBoards } from '../../../services/boardService';
 
 export default function WorkspaceBoardsScreen() {
   const { workspaceId, workspaceName } = useLocalSearchParams();
