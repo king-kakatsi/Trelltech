@@ -1,5 +1,5 @@
+import { View, Pressable, Animated, Dimensions, Platform, PanResponder, Keyboard } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Keyboard, PanResponder, Platform, Pressable, View } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const DRAG_THRESHOLD = 100;

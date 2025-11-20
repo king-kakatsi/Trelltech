@@ -6,12 +6,14 @@ import {
   FlatList,
   RefreshControl,
   ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+  Pressable,
+  Alert
 } from 'react-native';
-import { getWorkspaceBoards } from '../../../services/boardService';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { getWorkspaceBoards, createBoard } from '../../../services/boardService';
+import BottomDrawer from '../../../components/ui/BottomDrawer';
 
 export default function WorkspaceBoardsScreen() {
   const { workspaceId, workspaceName } = useLocalSearchParams();
@@ -23,6 +25,10 @@ export default function WorkspaceBoardsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAscending, setIsAscending] = useState(true);
+  const [isCreateDrawerVisible, setCreateDrawerVisible] = useState(false);
+  const [newBoardName, setNewBoardName] = useState('');
+  const [newBoardDescription, setNewBoardDescription] = useState('');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetchBoards();
@@ -64,7 +70,25 @@ export default function WorkspaceBoardsScreen() {
     setRefreshing(false);
   };
 
-  
+  const handleCreateBoard = async () => {
+    if (!newBoardName.trim()) {
+      Alert.alert('Error', 'Board name cannot be empty');
+      return;
+    }
+
+    try {
+      setCreating(true);
+      await createBoard(workspaceId, newBoardName.trim(), newBoardDescription.trim());
+      setNewBoardName('');
+      setNewBoardDescription('');
+      setCreateDrawerVisible(false);
+      await fetchBoards();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create board');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const toggleSortOrder = () => {
     setIsAscending(prev => !prev);
@@ -188,9 +212,7 @@ export default function WorkspaceBoardsScreen() {
       <View className="flex-1 bg-neutral-900 justify-center items-center">
         <Stack.Screen
           options={{
-            title: workspaceName || 'Boards',
-            headerStyle: { backgroundColor: '#171717' },
-            headerTintColor: '#fff'
+            headerShown: false
           }}
         />
         <ActivityIndicator size="large" color="#0079BF" />
@@ -203,72 +225,188 @@ export default function WorkspaceBoardsScreen() {
     <View className="flex-1 pt-10 bg-neutral-900">
       <Stack.Screen
         options={{
-          title: workspaceName || 'Boards',
-          headerStyle: { backgroundColor: '#171717' },
-          headerTintColor: '#fff'
+          headerShown: true,
+          headerTransparent: true,
+          headerStyle: { backgroundColor: 'transparent' },
+          headerTintColor: '#fff',
+          headerTitle: '',
+          headerLeft: () => (
+            <Pressable
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-neutral-800 items-center justify-center ml-4"
+            >
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </Pressable>
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => setCreateDrawerVisible(true)}
+              className="w-10 h-10 rounded-full bg-neutral-800 items-center justify-center mr-4"
+            >
+              <Ionicons name="add" size={24} color="#fff" />
+            </Pressable>
+          ),
         }}
       />
 
-      <View className="p-4 border-b border-neutral-800">
-        <View className="flex-row items-center space-x-2">
-          <View className="flex-1 bg-neutral-800 rounded-lg flex-row items-center px-3 py-2">
-            <Ionicons name="search" size={20} color="#9ca3af" />
-            <TextInput
-              className="flex-1 ml-2 text-white text-base"
-              placeholder="Search boards..."
-              placeholderTextColor="#6b7280"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color="#6b7280" />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <TouchableOpacity
-            onPress={toggleSortOrder}
-            className="bg-neutral-800 rounded-lg p-3 border border-neutral-700"
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={isAscending ? 'arrow-down' : 'arrow-up'}
-              size={20}
-              color="#0079BF"
-            />
-          </TouchableOpacity>
-        </View>
-
-        <Text className="text-neutral-500 text-sm mt-3">
-          {filteredBoards.length} {filteredBoards.length === 1 ? 'board' : 'boards'}
-        </Text>
-      </View>
-
-      {filteredBoards.length === 0 ? (
-        <View className="flex-1 justify-center items-center px-6">
-          <Ionicons name="folder-open-outline" size={64} color="#4b5563" />
-          <Text className="text-neutral-400 text-center mt-4 text-base">
-            {searchQuery.trim()
-              ? 'No boards found matching your search'
-              : 'No boards in this workspace'}
+      <SafeAreaView 
+        className="flex-1" 
+        edges={['top', 'left', 'right']}
+        style={{ backgroundColor: 'transparent' }}
+      >
+        <View className="px-4 py-3 mb-4">
+          <Text className="text-white text-2xl font-bold">
+            {workspaceName || 'Boards'}
           </Text>
         </View>
-      ) : (
-        <FlatList
-          data={filteredBoards}
-          renderItem={renderBoardCard}
-          keyExtractor={item => item.id}
-          contentContainerStyle={{ padding: 16 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor="#0079BF"
+
+        <View className="px-4 pb-4 border-b border-neutral-800">
+          <View className="flex-row items-center space-x-2">
+            <View className="flex-1 bg-neutral-800 rounded-lg flex-row items-center px-3 py-2">
+              <Ionicons name="search" size={20} color="#9ca3af" />
+              <TextInput
+                className="flex-1 ml-2 text-white text-base"
+                placeholder="Search boards..."
+                placeholderTextColor="#6b7280"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Ionicons name="close-circle" size={20} color="#6b7280" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <TouchableOpacity
+              onPress={toggleSortOrder}
+              className="bg-neutral-800 rounded-lg p-3 border border-neutral-700"
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={isAscending ? 'arrow-down' : 'arrow-up'}
+                size={12}
+                color="#0079BF"
+              />
+            </TouchableOpacity>
+          </View>
+
+          <Text className="text-neutral-500 text-sm mt-3">
+            {filteredBoards.length} {filteredBoards.length === 1 ? 'board' : 'boards'}
+          </Text>
+        </View>
+
+        {filteredBoards.length === 0 ? (
+          <View className="flex-1 justify-center items-center px-6">
+            <View className="bg-neutral-800 rounded-full p-6 mb-4">
+              <Ionicons name="folder-open-outline" size={64} color="#9ca3af" />
+            </View>
+            <Text className="text-white text-center text-lg font-semibold mb-2">
+              {searchQuery.trim() ? 'No boards found' : 'No boards yet'}
+            </Text>
+            <Text className="text-neutral-400 text-center mb-6">
+              {searchQuery.trim()
+                ? 'Try a different search term'
+                : 'Create your first board to get started'}
+            </Text>
+            {!searchQuery.trim() && (
+              <Pressable
+                onPress={() => setCreateDrawerVisible(true)}
+                className="bg-white px-6 py-3 rounded-xl"
+              >
+                <Text className="text-gray-900 font-semibold">
+                  Create First Board
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        ) : (
+          <FlatList
+            data={filteredBoards}
+            renderItem={renderBoardCard}
+            keyExtractor={item => item.id}
+            contentContainerStyle={{ padding: 16 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#0079BF"
+              />
+            }
+          />
+        )}
+      </SafeAreaView>
+
+      <BottomDrawer 
+        visible={isCreateDrawerVisible} 
+        onClose={() => {
+          setCreateDrawerVisible(false);
+          setNewBoardName('');
+          setNewBoardDescription('');
+        }}
+      >
+        <Text className="text-2xl font-bold text-white mb-6">
+          Create New Board
+        </Text>
+
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View className="mb-4">
+            <Text className="text-sm font-semibold text-gray-400 mb-2">
+              Board Name
+            </Text>
+            <TextInput
+              value={newBoardName}
+              onChangeText={setNewBoardName}
+              placeholder="Enter board name"
+              placeholderTextColor="#6B778C"
+              className="bg-[#1a1a1a] text-white px-4 py-3 rounded-xl text-base"
+              autoFocus
             />
-          }
-        />
-      )}
+          </View>
+
+          <View className="mb-6">
+            <Text className="text-sm font-semibold text-gray-400 mb-2">
+              Description (optional)
+            </Text>
+            <TextInput
+              value={newBoardDescription}
+              onChangeText={setNewBoardDescription}
+              placeholder="Add board description"
+              placeholderTextColor="#6B778C"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              className="bg-[#1a1a1a] text-white px-4 py-3 rounded-xl text-base min-h-[100px]"
+            />
+          </View>
+
+          <View className="flex-row gap-3">
+            <Pressable
+              onPress={() => {
+                setCreateDrawerVisible(false);
+                setNewBoardName('');
+                setNewBoardDescription('');
+              }}
+              disabled={creating}
+              className="flex-1 bg-[#1a1a1a] py-4 rounded-xl"
+            >
+              <Text className="text-white text-center font-semibold text-base">
+                Cancel
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleCreateBoard}
+              disabled={creating}
+              className="flex-1 bg-white py-4 rounded-xl"
+            >
+              <Text className="text-gray-900 text-center font-semibold text-base">
+                {creating ? 'Creating...' : 'Create'}
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </BottomDrawer>
     </View>
   );
 }
