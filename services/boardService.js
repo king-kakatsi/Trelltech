@@ -1,7 +1,7 @@
-import { fetchFromLocalStorage } from './localStorageService';
+import { getTemplateById } from '../utils/boardTemplates';
 import { TRELLO_CONFIG } from '../utils/constants';
 import { getFromApi, postWithApi, updateWithApi } from './axiosService';
-import { getTemplateById } from '../utils/boardTemplates';
+import { fetchFromLocalStorage } from './localStorageService';
 
 export const getWorkspaceBoards = async (workspaceId) => {
   try {

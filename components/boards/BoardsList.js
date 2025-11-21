@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { FlatList, Text, TextInput, TouchableOpacity, View, RefreshControl } from 'react-native';
+import { FlatList, RefreshControl, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import BoardCard from './BoardCard';
 import EmptyBoardsState from './EmptyBoardsState';
 

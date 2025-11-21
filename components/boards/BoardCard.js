@@ -83,7 +83,7 @@ export default function BoardCard({ board, onPress }) {
                   className="w-8 h-8 rounded-full justify-center items-center mr-2"
                 >
                   <Text className="text-white text-xs font-bold">
-                    {member.initials || member.fullName.substring(0, 2).toUpperCase()}
+                    {(member.initials || member.fullName.substring(0, 2)).toUpperCase()}
                   </Text>
                 </View>
               ))}

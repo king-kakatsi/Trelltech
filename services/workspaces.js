@@ -1,4 +1,4 @@
-import { deleteAllWithApi, getFromApi, postWithApi, updateWithApi } from "./axiosService";
+import { deleteAllWithApi, deleteWithApi, getFromApi, postWithApi, updateWithApi } from "./axiosService";
 import { fetchFromLocalStorage } from "./localStorageService";
 
 // const token = 'ATTA699410413122bd02f2e3b9be3ab68d9ca1754983909014257aebe51ba366362eD7365349';
@@ -97,6 +97,62 @@ export async function deleteWorkspace(id) {
         return res;
     } catch (error) {
         console.error('Error creating board:', error);
+        throw error;
+    }
+}
+
+// Added: get members of a workspace (organization)
+export async function getWorkspaceMembers(id) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+        const endpoint = `/organizations/${id}/members?key=${apiKey}&token=${encodeURIComponent(token)}`;
+        console.log('DEBUG getWorkspaceMembers endpoint:', endpoint);
+        const res = await getFromApi(endpoint);
+        return res;
+    } catch (error) {
+        console.error('Error fetching workspace members:', error);
+        throw error;
+    }
+}
+
+// Add a member to a workspace (organization)
+// Uses updateWithApi to perform the request; sends an empty body {} because Trello expects query params.
+export async function addMember(id, email, fullName) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+
+        const endpoint = `/organizations/${id}/members?email=${encodeURIComponent(email)}&fullName=${encodeURIComponent(fullName)}&key=${apiKey}&token=${encodeURIComponent(token)}`;
+        console.log('DEBUG addMember endpoint:', endpoint);
+
+        // updateWithApi expects a non-null data argument, so we pass an empty object.
+        const [success, data] = await updateWithApi(endpoint, {}, { autoJoin: false });
+
+        if (!success) throw data;
+        return data;
+    } catch (error) {
+        console.error('Error adding member to workspace:', error);
+        throw error;
+    }
+}
+
+// New: remove a member from a workspace (organization)
+export async function deleteMember(id, idMember) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+
+        const endpoint = `/organizations/${id}/members/${idMember}?key=${apiKey}&token=${encodeURIComponent(token)}`;
+        console.log('DEBUG deleteMember endpoint:', endpoint);
+
+        // use deleteWithApi so we expect a 200 success by default
+        const [success, data] = await deleteWithApi(endpoint);
+
+        if (!success) throw data;
+        return data;
+    } catch (error) {
+        console.error('Error deleting member from workspace:', error);
         throw error;
     }
 }
