@@ -2,7 +2,6 @@ import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useEffect, useState } from 'react';
-import WorkspaceList from '../../components/home/WorkspaceList';
 import { useAuth } from '../../contexts/AuthContext';
 
 import { Pressable, Text } from 'react-native';
@@ -15,7 +14,7 @@ export default function HomeScreen() {
   const { token, user } = useAuth();
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [options, setOptions] = useState(true);
+  const [options, setlOptions] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const [isListMenuVisible, setListMenuVisible] = useState(false);
@@ -103,12 +102,13 @@ export default function HomeScreen() {
         }}
       />
 
-      <WorkspaceList
+      {/* <WorkspaceList
         workspaces={workspaces}
         loading={loading}
         refreshing={refreshing}
         onRefresh={onRefresh}
-      />
+      /> */}
+
 
       <BottomDrawer visible={isListMenuVisible} onClose={() => setListMenuVisible(false)}>
         <OptionsModal options={options} setOptions={setOptions} refreshWorkspaces={onRefresh} />

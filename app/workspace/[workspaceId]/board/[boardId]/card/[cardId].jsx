@@ -1,6 +1,8 @@
 import { View, Text } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-
+import CardUpdate from '../../../../../../components/cards/CardUpdate';
+import CardDetail from '../../../../../../components/cards/CardDetails';
+import CardCreate from '../../../../../../components/cards/CardCreate';
 export default function CardDetailScreen() {
   const { workspaceId, boardId, cardId } = useLocalSearchParams();
 
@@ -18,6 +20,9 @@ export default function CardDetailScreen() {
       <Text className="text-gray-600 mt-1">
         Card: {cardId}
       </Text>
+      {/* <CardUpdate cardId="691bd81ac89965b756d64612" />   */}
+      {/* <CardDetail cardId="691bd81ac89965b756d64612" />   */}
+      {/* <CardCreate lidtId="691bd81ac89965b756d64612" />   */}
     </View>
   );
 }

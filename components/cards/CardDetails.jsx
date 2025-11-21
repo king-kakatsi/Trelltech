@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Image, ActivityIndicator } from 'react-native';
-import { getCard, getCardComments } from '../../services/trello';
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCard, getCardComments } from '../../services/trello';
 import CardComments from './CardComments';
 
 export default function CardDetail({ cardId }) {
@@ -31,6 +31,14 @@ export default function CardDetail({ cardId }) {
     fetchData();
   }, [cardId, token]);
 
+  const handleUpdate = () => {
+    console.log('Update card:', cardId);
+  };
+
+  const handleArchive = () => {
+    console.log('Archive card:', cardId);
+  };
+
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center">
@@ -49,22 +57,30 @@ export default function CardDetail({ cardId }) {
 
   return (
     <ScrollView className="p-4 bg-[#1a1a1a] rounded-lg">
-      {/* Header */}
-      <Text className="text-xl font-bold text-white mb-2">{card.name}</Text>
-      <Text className="text-gray-300 mb-4">{card.desc || "Aucune description"}</Text>
 
-      {/* Members */}
-      {card.idMembers?.length > 0 && (
+      {/* Header */}
+      <View className="flex-row justify-between items-start mb-4">
+        <View className="flex-1 mr-3">
+          <Text className="text-xl font-bold text-white mb-2">{card.name}</Text>
+          <Text className="text-gray-300">{card.desc || "Aucune description"}</Text>
+        </View>
+      </View>
+
+      {/* Members  */}
+      {card.members && card.members.length > 0 && (
         <View className="flex-row mb-4">
-          {card.members?.map(member => (
-            <Image
-              key={member.id}
-              source={{ uri: member.avatarUrl }}
-              className="w-8 h-8 rounded-full mr-2"
-            />
+          {card.members.map(member => (
+            <View key={member.id} className="mr-2">
+              <View className="w-10 h-10 rounded-full bg-gray-700 items-center justify-center">
+                <Text className="text-white font-bold">
+                  {member.fullName?.charAt(0)?.toUpperCase()}
+                </Text>
+              </View>
+            </View>
           ))}
         </View>
       )}
+
 
       {/* Due Date */}
       {card.due && (
@@ -72,6 +88,23 @@ export default function CardDetail({ cardId }) {
           Due: {new Date(card.due).toLocaleString()}
         </Text>
       )}
+
+      {/* Actions */}
+      <View className="flex-row gap-2 mb-4">
+        <TouchableOpacity
+          onPress={handleUpdate}
+          className="bg-green-600 p-2 rounded-lg"
+        >
+          <Text className="text-white text-md">Update</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleArchive}
+          className="bg-red-600 p-2 rounded-lg"
+        >
+          <Text className="text-white text-md">Archive</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Comments */}
       <CardComments
