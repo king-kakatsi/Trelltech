@@ -11,6 +11,7 @@ import EditBoardDrawer from '../../../../../components/boardDetail/EditBoardDraw
 import CreateListDrawer from '../../../../../components/boardDetail/CreateListDrawer';
 import ListMenuDrawer from '../../../../../components/boardDetail/ListMenuDrawer';
 import EditListDrawer from '../../../../../components/boardDetail/EditListDrawer';
+import AddMembersDrawer from '../../../../../components/ui/AddMembersDrawer';
 import { 
   getBoardDetails, 
   getBoardLists,
@@ -39,6 +40,7 @@ export default function BoardDetailScreen() {
   const [isEditBoardVisible, setEditBoardVisible] = useState(false);
   const [isListMenuVisible, setListMenuVisible] = useState(false);
   const [isEditListVisible, setEditListVisible] = useState(false);
+  const [isMembersDrawerVisible, setMembersDrawerVisible] = useState(false);
   
   const [newListName, setNewListName] = useState('');
   const [editedBoardName, setEditedBoardName] = useState('');
@@ -201,6 +203,21 @@ export default function BoardDetailScreen() {
     setEditBoardVisible(true);
   };
 
+  const handleOpenManageMembers = () => {
+    setBoardMenuVisible(false);
+    setMembersDrawerVisible(true);
+  };
+
+  const handleMembersUpdated = async () => {
+    // Refresh members list after changes
+    try {
+      const membersData = await getBoardMembers(boardId);
+      setMembers(membersData);
+    } catch (error) {
+      console.error('Error refreshing members:', error);
+    }
+  };
+
   if (loading) {
     return (
       <View className="flex-1 bg-[#1a1a1a] items-center justify-center">
@@ -250,6 +267,7 @@ export default function BoardDetailScreen() {
         visible={isBoardMenuVisible}
         onClose={() => setBoardMenuVisible(false)}
         onEditBoard={handleOpenEditBoard}
+        onManageMembers={handleOpenManageMembers}
         onArchiveBoard={() => {
           setBoardMenuVisible(false);
           handleArchiveBoard();
@@ -291,6 +309,14 @@ export default function BoardDetailScreen() {
         onListNameChange={setEditedListName}
         onClose={() => setEditListVisible(false)}
         onSave={handleSaveListEdit}
+      />
+
+      <AddMembersDrawer
+        visible={isMembersDrawerVisible}
+        onClose={() => setMembersDrawerVisible(false)}
+        instanceType="board"
+        instanceId={boardId}
+        onMembersUpdated={handleMembersUpdated}
       />
     </SafeAreaView>
   );
