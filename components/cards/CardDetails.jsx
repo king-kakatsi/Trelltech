@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { getCard, getCardComments } from '../../services/trello';
 import CardComments from './CardComments';
@@ -56,7 +57,9 @@ export default function CardDetail({ cardId }) {
   }
 
   return (
-    <ScrollView className="p-4 bg-[#1a1a1a] rounded-lg">
+    <SafeAreaView className="flex-1 bg-[#1a1a1a] w-full" edges={['top']}>
+
+    <ScrollView className="p-4 bg-[#1a1a1a] rounded-lg w-full">
 
       {/* Header */}
       <View className="flex-row justify-between items-start mb-4">
@@ -113,5 +116,6 @@ export default function CardDetail({ cardId }) {
         onCommentsChange={setComments}
       />
     </ScrollView>
+    </SafeAreaView>
   );
 }
