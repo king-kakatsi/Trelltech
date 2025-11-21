@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,11 +11,10 @@ import CardUpdate from './CardUpdate';
 
 export default function CardDetail({ cardId, onArchived }) {
   const { token } = useAuth();
+  const { workspaceId, boardId } = useLocalSearchParams();
   const [card, setCard] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // État pour afficher le drawer
   const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
 
   useEffect(() => {
@@ -44,12 +43,12 @@ export default function CardDetail({ cardId, onArchived }) {
   };
 
   const handleUpdate = () => {
-    setShowUpdateDrawer(true); // ouvre le drawer
+    setShowUpdateDrawer(true);
   };
 
   const handleArchive = () => {
     Alert.alert(
-      'Confirmer l’archivage',
+      "Confirmer l'archivage",
       'Êtes-vous sûr de vouloir archiver cette carte ?',
       [
         { text: 'Annuler', style: 'cancel' },
@@ -61,14 +60,20 @@ export default function CardDetail({ cardId, onArchived }) {
               setLoading(true);
               const success = await deleteCard(cardId, token);
               if (success) {
-                Alert.alert('Carte archivée', 'La carte a été archivée avec succès.');
-                onArchived?.();
+                Alert.alert('Carte archivée', 'La carte a été archivée avec succès.', [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      router.replace(`/workspace/${workspaceId}/board/${boardId}`);
+                    }
+                  }
+                ]);
               } else {
-                Alert.alert('Erreur', 'Impossible d’archiver la carte.');
+                Alert.alert('Erreur', "Impossible d'archiver la carte.");
               }
             } catch (err) {
               console.error('Erreur archive card:', err);
-              Alert.alert('Erreur', 'Une erreur est survenue lors de l’archivage.');
+              Alert.alert('Erreur', "Une erreur est survenue lors de l'archivage.");
             } finally {
               setLoading(false);
             }
@@ -109,7 +114,7 @@ export default function CardDetail({ cardId, onArchived }) {
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </Pressable>
         <Text className="text-white text-xl font-bold">Card Detail</Text>
-        <View style={{ width: 40 }} /> {/* placeholder for spacing */}
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView className="p-4 bg-[#1a1a1a] rounded-lg w-full">
