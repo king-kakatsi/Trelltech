@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { getWorkspaceMembers } from '../../services/workspaces';
+import { addMember, getWorkspaceMembers } from '../../services/workspaces';
 
 const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () => {}, onMembersUpdated = () => {} }) => {
   const [members, setMembers] = useState([]);
@@ -56,27 +56,36 @@ const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () =
       Alert.alert('Erreur', 'Please enter an email');
       return;
     }
+
+    // simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(mail)) {
+      Alert.alert('Erreur', 'Veuillez fournir une adresse email valide.');
+      return;
+    }
+
+    // derive a default fullName from local part if needed
+    const localPart = mail.split('@')[0] || 'Member';
+    const fullName = localPart
+      .replace(/[._\-+]/g, ' ')
+      .split(' ')
+      .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+      .filter(Boolean)
+      .join(' ');
+
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/workspaces/${workspaceId}/members`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: mail }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Add member failed');
-      }
-      const json = await res.json();
-      // mettre à jour la liste locale
+      // use addMember service (throws on failure)
+      const result = await addMember(workspaceId, mail, fullName);
+      // refresh local list and UI
       await fetchMembers();
       setEmail('');
-      Alert.alert('Succès', 'Member added.');
-      // notifier parent
-      try { await Promise.resolve(onMembersUpdated(json)); } catch (_) {}
+      Alert.alert('Succès', 'Membre ajouté.');
+      try { await Promise.resolve(onMembersUpdated(result)); } catch (_) {}
     } catch (err) {
       console.error('handleAddMember error', err);
-      Alert.alert('Erreur', err.message || 'Could not add member.');
+      const message = (err && (err.message || err?.error || err?.messageText)) || 'Could not add member.';
+      Alert.alert('Erreur', message);
     } finally {
       setSubmitting(false);
     }

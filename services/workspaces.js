@@ -115,3 +115,24 @@ export async function getWorkspaceMembers(id) {
         throw error;
     }
 }
+
+// Add a member to a workspace (organization)
+// Uses updateWithApi to perform the request; sends an empty body {} because Trello expects query params.
+export async function addMember(id, email, fullName) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+
+        const endpoint = `/organizations/${id}/members?email=${encodeURIComponent(email)}&fullName=${encodeURIComponent(fullName)}&key=${apiKey}&token=${encodeURIComponent(token)}`;
+        console.log('DEBUG addMember endpoint:', endpoint);
+
+        // updateWithApi expects a non-null data argument, so we pass an empty object.
+        const [success, data] = await updateWithApi(endpoint, {}, { autoJoin: false });
+
+        if (!success) throw data;
+        return data;
+    } catch (error) {
+        console.error('Error adding member to workspace:', error);
+        throw error;
+    }
+}
