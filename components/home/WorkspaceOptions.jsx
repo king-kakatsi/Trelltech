@@ -28,11 +28,11 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
       const handleDelete = () => {
         if (!selectedAccordionId) return;
         Alert.alert(
-          "Confirmer la suppression",
-          "Voulez-vous vraiment supprimer ce workspace ?",
+          "Confirm Deletion",
+          "Are you sure you want to delete this workspace? This action cannot be undone.",
           [
-            { text: "Annuler", style: "cancel" },
-            { text: "Supprimer", style: "destructive", onPress: async () => {
+            { text: "Cancel", style: "cancel" },
+            { text: "Delete", style: "destructive", onPress: async () => {
                 try {
                   const id = selectedAccordionId;
                   // appeler la fonction de suppression
@@ -41,7 +41,7 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
 
                   if (!success) {
                     // suppression OK : fermer menu, réinitialiser sélection et déclencher refresh si fourni
-                    Alert.alert('Supprimé', 'Workspace supprimé avec succès.');
+                    Alert.alert('Supprimé', 'Workspace deleted successfully.');
                     setListMenuVisible(false);
                     // setSelectedAccordionId(null);
                     if (typeof onRefresh === 'function') {
@@ -49,11 +49,11 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
                     }
                   } else {
                     console.error('Delete failed:', data);
-                    Alert.alert('Erreur', data?.message || 'Échec de la suppression.');
+                    Alert.alert('Erreur', data?.message || 'Deletion failed.');
                   }
                 } catch (error) {
                   console.error('Error deleting workspace:', error);
-                  Alert.alert('Erreur', 'Une erreur est survenue lors de la suppression.');
+                  Alert.alert('Erreur', 'Something went wrong while deleting the workspace.');
                 }
               }
             },
@@ -71,19 +71,19 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
     return (
         <View className="p-4">
           <TouchableOpacity onPress={handleAccess} className="py-3 px-4 bg-blue-600 rounded-md mb-2">
-            <Text className="text-white">Accéder au workspace</Text>
+            <Text className="text-white">Show the workspace</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleEdit} className="py-3 px-4 bg-yellow-600 rounded-md mb-2">
-            <Text className="text-white">Modifier</Text>
+            <Text className="text-white">Modify the workspace</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleDelete} className="py-3 px-4 bg-red-600 rounded-md mb-2">
-            <Text className="text-white">Supprimer</Text>
+            <Text className="text-white">Delete the workspace</Text>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleAddMembers} className="py-3 px-4 bg-green-600 rounded-md">
-            <Text className="text-white">Ajouter des membres</Text>
+            <Text className="text-white">Add members</Text>
           </TouchableOpacity>
 
           {/* Drawer / modal pour l'édition du workspace */}
@@ -103,6 +103,7 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
                 setEditDrawerVisible(false);
                 setListMenuVisible(false);
                 setSelectedAccordionId(null);
+                onRefresh()
                 // si vous avez un refresh au parent, appelez le callback approprié (non fourni ici)
               }}
             />

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { postBoard } from '../../services/workspaces';
+import { postWorkspace } from '../../services/workspaces';
 
 const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
   const [newWorkspace,setNewWorkspace] = useState({
@@ -58,7 +58,7 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
         name: newWorkspace.name.trim().toLowerCase(),
         website: websiteTrim
       };
-      const res = await postBoard(newWorkspace.displayName.trim(), options);
+      const res = await postWorkspace(newWorkspace.displayName.trim(), options);
       console.log("res postBoard",res);
       
       setNewWorkspace({

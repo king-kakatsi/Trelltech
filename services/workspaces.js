@@ -1,4 +1,4 @@
-import { deleteAllWithApi, getFromApi, postWithApi } from "./axiosService";
+import { deleteAllWithApi, getFromApi, postWithApi, updateWithApi } from "./axiosService";
 import { fetchFromLocalStorage } from "./localStorageService";
 
 // const token = 'ATTA699410413122bd02f2e3b9be3ab68d9ca1754983909014257aebe51ba366362eD7365349';
@@ -33,7 +33,7 @@ export async function getBoard(id) {
 }
 
 // Create a new board
-export const postBoard = async (displayName, options = {}) => {
+export const postWorkspace = async (displayName, options = {}) => {
     // options may contain: { desc, name, website }
     try {
         const token = await fetchFromLocalStorage('trello_token');
@@ -68,6 +68,25 @@ export const postBoard = async (displayName, options = {}) => {
         throw error;
     }
 };
+
+export async function updateWorkspace(id, payload = {}) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+
+        // endpoint includes id as path param and key/token as query params
+        const endpoint = `/organizations/${id}?key=${apiKey}&token=${encodeURIComponent(token)}`;
+
+        // send the rest of fields in the request body
+        const [success, data] = await updateWithApi(endpoint, payload, { autoJoin: false });
+
+        if (!success) throw data;
+        return data;
+    } catch (error) {
+        console.error('Error updating workspace:', error);
+        throw error;
+    }
+}
 
 export async function deleteWorkspace(id) {
     try {
