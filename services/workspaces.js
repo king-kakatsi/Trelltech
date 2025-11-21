@@ -100,3 +100,18 @@ export async function deleteWorkspace(id) {
         throw error;
     }
 }
+
+// Added: get members of a workspace (organization)
+export async function getWorkspaceMembers(id) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+        const endpoint = `/organizations/${id}/members?key=${apiKey}&token=${encodeURIComponent(token)}`;
+        console.log('DEBUG getWorkspaceMembers endpoint:', endpoint);
+        const res = await getFromApi(endpoint);
+        return res;
+    } catch (error) {
+        console.error('Error fetching workspace members:', error);
+        throw error;
+    }
+}
