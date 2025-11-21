@@ -1,4 +1,4 @@
-import { getFromApi, postWithApi } from "./axiosService";
+import { deleteAllWithApi, getFromApi, postWithApi, updateWithApi } from "./axiosService";
 import { fetchFromLocalStorage } from "./localStorageService";
 
 // const token = 'ATTA699410413122bd02f2e3b9be3ab68d9ca1754983909014257aebe51ba366362eD7365349';
@@ -6,49 +6,97 @@ import { fetchFromLocalStorage } from "./localStorageService";
 
 const apiKey = process.env.EXPO_PUBLIC_TRELLTECH_API_KEY;
 
-export async function getAllWorkspaces(token) {
-    const res = await getFromApi(`/members/me/organizations?key=${apiKey}&token=${token}`);
-    return res;
+export async function getAllWorkspaces() {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+        const endpoint = `/members/me/organizations?key=${apiKey}&token=${encodeURIComponent(token)}`;
+        const res = await getFromApi(endpoint);
+        return res;
+    } catch (error) {
+        console.error('Error fetching workspaces:', error);
+        throw error;
+    }
 }
 
-export async function getBoard(id,token) {
-    const res = await getFromApi(`/boards/${id}?key=${apiKey}&token=${token}`);
-    return res;
+export async function getBoard(id) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+        const endpoint = `/boards/${id}?key=${apiKey}&token=${encodeURIComponent(token)}`;
+        const res = await getFromApi(endpoint);
+        return res;
+    } catch (error) {
+        console.error('Error fetching board:', error);
+        throw error;
+    }
 }
-
-// export async function postBoard(displayName,token) {
-//     const res = await getFromApi(`/organizations?displayName=${displayName}&key=${apiKey}&token=${token}`);
-//     return res;
-// }
 
 // Create a new board
-export const postBoard = async (displayName) => {
+export const postWorkspace = async (displayName, options = {}) => {
+    // options may contain: { desc, name, website }
     try {
-      const token = await fetchFromLocalStorage('trello_token');
-      if (token) {
-        const endpoint = `/organizations?displayName=${displayName}&key=${apiKey}&token=${token}`;
-        // const endpoint = `/boards/?key=${TRELLO_CONFIG.API_KEY}&token=${token}&name=${encodeURIComponent(boardName)}&idOrganization=${workspaceId}`;
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+
+        // build query params with displayName and any provided options
+        const params = [];
+        params.push(`displayName=${encodeURIComponent(displayName)}`);
+        if (options.desc !== undefined && options.desc !== null) {
+            params.push(`desc=${encodeURIComponent(options.desc)}`);
+        }
+        if (options.name !== undefined && options.name !== null) {
+            params.push(`name=${encodeURIComponent(options.name)}`);
+        }
+        if (options.website !== undefined && options.website !== null) {
+            params.push(`website=${encodeURIComponent(options.website)}`);
+        }
+        params.push(`key=${apiKey}`);
+        params.push(`token=${encodeURIComponent(token)}`);
+
+        const endpoint = `/organizations?${params.join('&')}`;
         console.log('DEBUG endpoint:', endpoint);
-        
-        // Add optional prefs like background color
-        let fullEndpoint = endpoint;
-        // if (prefs.backgroundColor) {
-        //   fullEndpoint += `&prefs_background=${prefs.backgroundColor}`;
-        // }
-        // if (prefs.permissionLevel) {
-        //   fullEndpoint += `&prefs_permissionLevel=${prefs.permissionLevel}`;
-        // }
-        
-        const [success, data] = await postWithApi(fullEndpoint);
+
+        // call API with endpoint only — no body
+        const [success, data] = await postWithApi(endpoint);
         console.log('DEBUG success:', success);
-        
+
         if (!success) throw data;
-        
         return data;
-      }
-      throw 'No token found';
     } catch (error) {
-      console.error('Error creating board:', error);
-      throw error;
+        console.error('Error creating board:', error);
+        throw error;
     }
-  };
+};
+
+export async function updateWorkspace(id, payload = {}) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+
+        // endpoint includes id as path param and key/token as query params
+        const endpoint = `/organizations/${id}?key=${apiKey}&token=${encodeURIComponent(token)}`;
+
+        // send the rest of fields in the request body
+        const [success, data] = await updateWithApi(endpoint, payload, { autoJoin: false });
+
+        if (!success) throw data;
+        return data;
+    } catch (error) {
+        console.error('Error updating workspace:', error);
+        throw error;
+    }
+}
+
+export async function deleteWorkspace(id) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+        const res = await deleteAllWithApi(`/organizations/${id}?key=${apiKey}&token=${token}`);
+        console.log("deleteWorkspace", res);
+        return res;
+    } catch (error) {
+        console.error('Error creating board:', error);
+        throw error;
+    }
+}

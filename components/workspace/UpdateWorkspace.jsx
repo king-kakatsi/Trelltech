@@ -1,78 +1,110 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { postWorkspace } from '../../services/workspaces';
+import { updateWorkspace } from '../../services/workspaces';
 
-const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
-  const [newWorkspace,setNewWorkspace] = useState({
+const UpdateWorkspace = ({ open, workspace = null, onUpdate = () => {}, onClose = () => {} }) => {
+  // Harmonisé avec NewWorkspace: état unique pour les champs
+  const [workspaceData, setWorkspaceData] = useState({
     displayName: '',
-    description: '',
     name: '',
+    description: '',
     website: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const setInformation = (field, value) => {
-    setNewWorkspace(prevState => ({
-      ...prevState,
+    setWorkspaceData(prev => ({
+      ...prev,
       [field]: value
     }));
-  }
+  };
+
+  // Populate form when opened or when workspace changes
+  useEffect(() => {
+    if (open && workspace) {
+      setWorkspaceData({
+        displayName: workspace.displayName ?? '',
+        name: workspace.name ?? '',
+        description: workspace.desc ?? '',
+        website: workspace.website ?? ''
+      });
+    } else if (!open) {
+      setWorkspaceData({
+        displayName: '',
+        name: '',
+        description: '',
+        website: ''
+      });
+    }
+  }, [open, workspace]);
 
   const handleClose = () => {
     if (isSubmitting) return;
-    setNewWorkspace({
+    setWorkspaceData({
       displayName: '',
-      description: '',
       name: '',
+      description: '',
       website: ''
     });
     onClose();
   };
 
-  const handleCreate = async () => {
-    // validation: displayName est nécessaire
-    if (!newWorkspace.displayName.trim()) {
-      Alert.alert('Erreur', 'Le display name ne peut pas être vide');
+  const handleUpdate = async () => {
+    // validation: displayName requis (harmonisé avec NewWorkspace)
+    if (!workspaceData.displayName.trim()) {
+      Alert.alert('Erreur', 'Th field display name is required');
       return;
     }
-
-    // Valider website uniquement s'il est renseigné
-    const websiteTrim = newWorkspace.website.trim();
-    if (websiteTrim) {
-      try {
-        const parsed = new URL(websiteTrim);
-        if (!['http:', 'https:'].includes(parsed.protocol)) {
-          throw new Error('Le lien doit utiliser http ou https');
-        }
-      } catch (e) {
-        Alert.alert('Erreur', 'Le champ Website doit contenir une URL valide (ex: https://example.com)');
-        return;
-      }
+    if (!workspace || !workspace.id) {
+      Alert.alert('Erreur', 'Workspace invalide');
+      return;
     }
 
     setIsSubmitting(true);
     try {
-      // convertir name en minuscules au moment de l'envoi
-      const options = {
-        desc: newWorkspace.description.trim(),
-        name: newWorkspace.name.trim().toLowerCase(),
-        website: websiteTrim
+      // Valider website uniquement s'il est renseigné
+      const websiteTrim = workspaceData.website.trim();
+      if (websiteTrim) {
+        try {
+          const parsed = new URL(websiteTrim);
+          if (!['http:', 'https:'].includes(parsed.protocol)) {
+            throw new Error('The website must start with http:// or https://');
+          }
+        } catch (e) {
+          Alert.alert('Erreur', 'The website URL is not valid');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // construire le payload similaire à la création (desc au lieu de description)
+      const payload = {
+        displayName: workspaceData.displayName.trim(),
+        name: workspaceData.name.trim().toLowerCase(),
+        desc: workspaceData.description.trim(),
       };
-      const res = await postWorkspace(newWorkspace.displayName.trim(), options);
-      console.log("res postBoard",res);
-      
-      setNewWorkspace({
+      if (websiteTrim) payload.website = websiteTrim;
+
+      const res = await updateWorkspace(workspace.id, payload);
+      console.log('UpdateWorkspace result:', res);
+
+      setWorkspaceData({
         displayName: '',
-        description: '',
         name: '',
+        description: '',
         website: ''
       });
+      // fermer d'abord le modal
       onClose();
-      onCreate();
+      // appeler le callback parent avec la réponse (et attendre s'il renvoie une Promise)
+      try {
+        await Promise.resolve(onUpdate(res));
+      } catch (cbErr) {
+        console.error('onUpdate callback error:', cbErr);
+      }
     } catch (err) {
-      console.error('NewWorkspace create error:', err);
-      const message = err?.message || String(err) || 'Impossible de créer l\'espace de travail';
-      Alert.alert('Erreur', message);
+      console.error('UpdateWorkspace error:', err);
+      Alert.alert('Erreur', 'Something went wrong while updating the workspace');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,22 +117,20 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
       animationType="slide"
       onRequestClose={handleClose}
     >
-      <Pressable
-        className="flex-1 bg-black/50"
-        onPress={handleClose}
-      >
+      <Pressable className="flex-1 bg-black/50" onPress={handleClose}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
         >
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }} keyboardShouldPersistTaps="handled">
             <View onStartShouldSetResponder={() => true} className="absolute bottom-0 left-0 right-0 bg-[#2a2a2a] p-4 rounded-t-xl">
-              <Text className="text-white text-lg font-semibold mb-3">New Workspace</Text>
+              <Text className="text-white text-lg font-semibold mb-3">Update Workspace</Text>
 
+              {/* Displayname */}
               <View className="mb-3">
                 <Text className="text-sm text-gray-300 mb-1">Displayname</Text>
                 <TextInput
-                  value={newWorkspace.displayName}
+                  value={workspaceData.displayName}
                   onChangeText={(text) => setInformation('displayName', text)}
                   placeholder="Display name"
                   placeholderTextColor="#6B728C"
@@ -108,10 +138,11 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
                 />
               </View>
 
+              {/* Name */}
               <View className="mb-3">
                 <Text className="text-sm text-gray-300 mb-1">Name</Text>
                 <TextInput
-                  value={newWorkspace.name}
+                  value={workspaceData.name}
                   onChangeText={(text) => setInformation('name', text)}
                   placeholder="Workspace name (unique)"
                   placeholderTextColor="#6B728C"
@@ -119,10 +150,11 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
                 />
               </View>
 
+              {/* Description (textarea-like) */}
               <View className="mb-3">
                 <Text className="text-sm text-gray-300 mb-1">Description</Text>
                 <TextInput
-                  value={newWorkspace.description}
+                  value={workspaceData.description}
                   onChangeText={(text) => setInformation('description', text)}
                   placeholder="Workspace description"
                   placeholderTextColor="#6B728C"
@@ -133,10 +165,11 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
                 />
               </View>
 
+              {/* Website */}
               <View className="mb-3">
                 <Text className="text-sm text-gray-300 mb-1">Website</Text>
                 <TextInput
-                  value={newWorkspace.website}
+                  value={workspaceData.website}
                   onChangeText={(text) => setInformation('website', text)}
                   placeholder="https://example.com"
                   placeholderTextColor="#6B728C"
@@ -156,12 +189,12 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
                 </Pressable>
 
                 <Pressable
-                  onPress={handleCreate}
+                  onPress={handleUpdate}
                   disabled={isSubmitting}
                   className="flex-1 bg-[#0079BF] py-3 rounded-xl items-center justify-center"
                 >
                   <Text className="text-white font-semibold">
-                    {isSubmitting ? 'Adding...' : 'Add'}
+                    {isSubmitting ? 'Updating...' : 'Update'}
                   </Text>
                 </Pressable>
               </View>
@@ -173,4 +206,4 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
   );
 };
 
-export default NewWorkspace;
+export default UpdateWorkspace;

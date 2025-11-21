@@ -1,9 +1,23 @@
+import { useRouter } from 'expo-router';
+import { useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
+import BottomDrawer from "../ui/BottomDrawer";
 import WorkspaceAccordion from "./WorkspaceAccordion";
+import WorkspaceOptions from './WorkspaceOptions';
 
 export default function WorkspaceList({ workspaces, loading, refreshing, onRefresh }) {
+  const [isListMenuVisible, setListMenuVisible] = useState(false);
+  const [selectedAccordionId, setSelectedAccordionId] = useState(null);
   const { token, user } = useAuth();
+  const router = useRouter();
+
+  const selectedWorkspace = workspaces.find(ws => ws.id === selectedAccordionId) ?? null;
+
+  const openDrawerFor = (id) => {
+    setSelectedAccordionId(id);
+    setListMenuVisible(true);
+  };
 
   return (
     <View style={{ flex: 1 }} className="bg-[#1a1a1a]">
@@ -32,9 +46,22 @@ export default function WorkspaceList({ workspaces, loading, refreshing, onRefre
             id={ws.id}
             name={ws.displayName}
             boards={ws.idBoards}
+            onOpen={() => openDrawerFor(ws.id)}
           />
         ))}
       </ScrollView>
+      <BottomDrawer
+        visible={isListMenuVisible}
+        onClose={() => { setListMenuVisible(false); setSelectedAccordionId(null); }}
+      >
+        <WorkspaceOptions
+          selectedAccordionId={selectedAccordionId}
+          setSelectedAccordionId={setSelectedAccordionId}
+          setListMenuVisible={setListMenuVisible}
+          selectedWorkspace={selectedWorkspace}
+          onRefresh={onRefresh}
+        />
+      </BottomDrawer>
     </View>
   );
 }
