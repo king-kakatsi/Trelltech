@@ -45,7 +45,7 @@ Complete guide to TrellTech's architecture, structure, and design patterns.
 ### Complete Directory Tree
 
 ```
-trelltech/
+
 ├── app/                           # Expo Router application
 │   ├── (auth)/                   # Auth route group
 │   │   └── login.jsx            # Login screen
