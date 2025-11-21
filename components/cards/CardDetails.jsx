@@ -1,17 +1,22 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
-import { getCard, getCardComments, archiveCard } from '../../services/trello';
+import { deleteCard, getCard, getCardComments } from '../../services/trello';
+import BottomDrawer from '../ui/BottomDrawer';
 import CardComments from './CardComments';
+import CardUpdate from './CardUpdate';
 
-export default function CardDetail({ cardId, onUpdate, onArchive }) {
+export default function CardDetail({ cardId, onArchived }) {
   const { token } = useAuth();
   const [card, setCard] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // État pour afficher le drawer
+  const [showUpdateDrawer, setShowUpdateDrawer] = useState(false);
 
   useEffect(() => {
     if (!cardId || !token) return;
@@ -39,26 +44,33 @@ export default function CardDetail({ cardId, onUpdate, onArchive }) {
   };
 
   const handleUpdate = () => {
-    onUpdate?.();
+    setShowUpdateDrawer(true); // ouvre le drawer
   };
 
-  const handleArchive = async () => {
+  const handleArchive = () => {
     Alert.alert(
-      'Archive Card',
-      'Are you sure you want to archive this card?',
+      'Confirmer l’archivage',
+      'Êtes-vous sûr de vouloir archiver cette carte ?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Annuler', style: 'cancel' },
         {
-          text: 'Archive',
+          text: 'Archiver',
           style: 'destructive',
           onPress: async () => {
             try {
-              await archiveCard(cardId, token);
-              Alert.alert('Success', 'Card archived successfully');
-              onArchive?.();
-            } catch (error) {
-              console.error('Error archiving card:', error);
-              Alert.alert('Error', 'Failed to archive card');
+              setLoading(true);
+              const success = await deleteCard(cardId, token);
+              if (success) {
+                Alert.alert('Carte archivée', 'La carte a été archivée avec succès.');
+                onArchived?.();
+              } else {
+                Alert.alert('Erreur', 'Impossible d’archiver la carte.');
+              }
+            } catch (err) {
+              console.error('Erreur archive card:', err);
+              Alert.alert('Erreur', 'Une erreur est survenue lors de l’archivage.');
+            } finally {
+              setLoading(false);
             }
           }
         }
@@ -87,99 +99,91 @@ export default function CardDetail({ cardId, onUpdate, onArchive }) {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#1a1a1a]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#1a1a1a] w-full" edges={['top']}>
       {/* Header */}
-      <View className="px-4 py-4 flex-row items-center">
+      <View className="flex-row justify-between items-center p-4">
         <Pressable
           onPress={handleBack}
-          className="w-10 h-10 rounded-full bg-black/30 items-center justify-center mr-3"
+          className="w-10 h-10 rounded-full bg-black/30 items-center justify-center"
         >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </Pressable>
-        
-        <Text className="text-white text-xl font-bold">
-          Card Detail
-        </Text>
+        <Text className="text-white text-xl font-bold">Card Detail</Text>
+        <View style={{ width: 40 }} /> {/* placeholder for spacing */}
       </View>
 
-      <ScrollView className="flex-1 bg-[#0a0a0a]">
-        <View className="p-4">
-          {/* Card Title */}
-          <Text className="text-lg font-semibold text-white mb-1">
-            {card.name}
-          </Text>
+      <ScrollView className="p-4 bg-[#1a1a1a] rounded-lg w-full">
+        {/* Card Title */}
+        <Text className="text-xl font-bold text-white mb-2">{card.name}</Text>
 
-          {/* Description */}
-          {card.desc && (
-            <View className="mb-4 bg-[#1a1a1a] p-4 rounded-lg mt-3">
-              <Text className="text-gray-400 text-sm mb-1">Description</Text>
-              <Text className="text-gray-300 leading-6">{card.desc}</Text>
-            </View>
-          )}
+        {/* Description */}
+        {card.desc && (
+          <View className="mb-4 bg-[#1a1a1a] p-4 rounded-lg">
+            <Text className="text-gray-400 text-sm mb-1">Description</Text>
+            <Text className="text-gray-300">{card.desc}</Text>
+          </View>
+        )}
 
-          {/* Members */}
-          {card.members && card.members.length > 0 && (
-            <View className="mb-4">
-              <Text className="text-gray-400 text-sm mb-2">Members</Text>
-              <View className="flex-row flex-wrap">
-                {card.members.map(member => (
-                  <View key={member.id} className="mr-2 mb-2">
-                    <View className="w-10 h-10 rounded-full bg-blue-600 items-center justify-center">
-                      <Text className="text-white font-bold text-lg">
-                        {member.fullName?.charAt(0)?.toUpperCase()}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
+        {/* Members */}
+        {card.members && card.members.length > 0 && (
+          <View className="mb-4 flex-row flex-wrap">
+            {card.members.map(member => (
+              <View key={member.id} className="mr-2 mb-2">
+                <View className="w-10 h-10 rounded-full bg-gray-700 items-center justify-center">
+                  <Text className="text-white font-bold">
+                    {member.fullName?.charAt(0)?.toUpperCase()}
+                  </Text>
+                </View>
               </View>
-            </View>
-          )}
-
-          {/* Due Date */}
-          {card.due && (
-            <View className="mb-4 bg-[#1a1a1a] p-3 rounded-lg">
-              <Text className="text-gray-400 text-sm mb-1">Due Date</Text>
-              <Text className="text-white font-medium">
-                {new Date(card.due).toLocaleString('en-US', {
-                  weekday: 'short',
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </Text>
-            </View>
-          )}
-
-          {/* Actions */}
-          <View className="flex-row gap-3 mb-6">
-            <TouchableOpacity
-              onPress={handleUpdate}
-              className="flex-1 bg-blue-600 py-3 rounded-lg"
-            >
-              <Text className="text-white text-center font-semibold">Edit Card</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleArchive}
-              className="flex-1 bg-red-600 py-3 rounded-lg"
-            >
-              <Text className="text-white text-center font-semibold">Archive</Text>
-            </TouchableOpacity>
+            ))}
           </View>
+        )}
 
-          {/* Comments Section */}
-          <View className="mb-4">
-            <Text className="text-white text-lg font-semibold mb-3">Activity</Text>
-            <CardComments
-              cardId={cardId}
-              initialComments={comments}
-              onCommentsChange={setComments}
-            />
-          </View>
+        {/* Due Date */}
+        {card.due && (
+          <Text className="text-gray-400 mb-4">
+            Due: {new Date(card.due).toLocaleString()}
+          </Text>
+        )}
+
+        {/* Actions */}
+        <View className="flex-row gap-2 mb-4">
+          <TouchableOpacity
+            onPress={handleUpdate}
+            className="flex-1 bg-green-600 p-2 rounded-lg"
+          >
+            <Text className="text-white text-center font-semibold">Update</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleArchive}
+            className="flex-1 bg-red-600 p-2 rounded-lg"
+          >
+            <Text className="text-white text-center font-semibold">Archive</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Comments */}
+        <CardComments
+          cardId={cardId}
+          initialComments={comments}
+          onCommentsChange={setComments}
+        />
       </ScrollView>
+
+      {/* Drawer pour CardUpdate */}
+      <BottomDrawer
+        visible={showUpdateDrawer}
+        onClose={() => setShowUpdateDrawer(false)}
+      >
+        <CardUpdate
+          cardId={cardId}
+          onSuccess={(updatedCard) => {
+            setCard(updatedCard);
+            setShowUpdateDrawer(false);
+          }}
+        />
+      </BottomDrawer>
     </SafeAreaView>
   );
 }

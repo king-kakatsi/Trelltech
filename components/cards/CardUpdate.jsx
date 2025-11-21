@@ -122,13 +122,13 @@ export default function CardUpdate({ cardId, onSuccess }) {
         <Text className="text-gray-300 mb-1">Due Date</Text>
 
         {Platform.OS === 'web' ? (
-          <input
+          <TextInput
             type="datetime-local"
             value={dueDate ? new Date(dueDate.getTime() - dueDate.getTimezoneOffset() * 60000)
               .toISOString()
               .slice(0, 16) : ''}
-            onChange={(e) => {
-              const d = new Date(e.target.value);
+            onChangeText={(text) => {
+              const d = new Date(text);
               if (!isNaN(d)) setDueDate(d);
             }}
             className="bg-[#2a2a2a] text-white px-3 py-2 rounded"
@@ -157,7 +157,6 @@ export default function CardUpdate({ cardId, onSuccess }) {
             )}
           </>
         )}
-
       </View>
 
       {/* BUTTON TO OPEN DRAWER */}
