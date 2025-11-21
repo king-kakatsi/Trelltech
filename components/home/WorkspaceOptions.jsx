@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { deleteWorkspace } from '../../services/workspaces';
 import BottomDrawer from '../ui/BottomDrawer';
-import ManageWorkspaceMembers from '../workspace/ManageWorkspaceMembers';
+import ManageWorkspaceMembers from '../workspace/ManageWorkspaceMembers'; // <-- added import
 import UpdateWorkspace from '../workspace/UpdateWorkspace';
 
 const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMenuVisible, selectedWorkspace = null, onRefresh = null}) => {
@@ -65,9 +65,10 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
     
       const handleAddMembers = () => {
         if (!selectedAccordionId) return;
+        // fermer le menu principal et ouvrir le drawer de gestion des membres
         // setListMenuVisible(false);
         setAddMembersDrawerVisible(true);
-        // keep selectedAccordionId intact if parent relies on it; we close it when drawer completes
+        // garder selectedAccordionId intact; le reset se fait au onClose / onMembersUpdated
       };
 
     return (
@@ -111,22 +112,29 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
             />
           </BottomDrawer>
 
-          {/* Render ManageWorkspaceMembers directly — it renders its own BottomDrawer */}
-          <ManageWorkspaceMembers
+          {/* Drawer / modal pour la gestion des membres */}
+          <BottomDrawer
             visible={isAddMembersDrawerVisible}
-            workspaceId={selectedAccordionId}
             onClose={() => {
               setAddMembersDrawerVisible(false);
-              setListMenuVisible(false);
-              setSelectedAccordionId(null);
+              // garder l'état du selectedAccordionId intact ici si nécessaire
             }}
-            onMembersUpdated={() => {
-              try { if (typeof onRefresh === 'function') onRefresh(); } catch(e){ console.error(e); }
-              setAddMembersDrawerVisible(false);
-              setListMenuVisible(false);
-              setSelectedAccordionId(null);
-            }}
-          />
+          >
+            <ManageWorkspaceMembers
+              open={isAddMembersDrawerVisible}
+              workspace={selectedWorkspace}
+              onClose={() => setAddMembersDrawerVisible(false)}
+              onMembersUpdated={() => {
+                // comportement identique à onUpdate d'UpdateWorkspace
+                setAddMembersDrawerVisible(false);
+                setListMenuVisible(false);
+                setSelectedAccordionId(null);
+                if (typeof onRefresh === 'function') {
+                  try { onRefresh(); } catch (e) { console.error('onRefresh callback error', e); }
+                }
+              }}
+            />
+          </BottomDrawer>
         </View>
     );
 };

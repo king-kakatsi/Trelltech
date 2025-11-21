@@ -1,176 +1,194 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { addMember, getAvailableMembers, getCurrentMembers, removeMember } from '../../services/memberService';
-import { getMemberColor, getMemberInitials } from '../../utils/memberColors';
-import BottomDrawer from '../ui/BottomDrawer';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { getWorkspaceMembers } from '../../services/workspaces';
 
-const ManageWorkspaceMembers = ({ visible, onClose, workspaceId, onMembersUpdated }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [availableMembers, setAvailableMembers] = useState([]);
-  const [currentMemberIds, setCurrentMemberIds] = useState(new Set());
-  const [selectedMemberIds, setSelectedMemberIds] = useState(new Set());
+const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () => {}, onMembersUpdated = () => {} }) => {
+  const [members, setMembers] = useState([]);
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      fetchMembers();
-    } else {
-      setSearchQuery('');
-    }
-  }, [visible, workspaceId]);
+  const workspaceId = workspace?.id;
 
   const fetchMembers = async () => {
     if (!workspaceId) return;
     setLoading(true);
     try {
-      const [available, current] = await Promise.all([
-        getAvailableMembers('workspace', workspaceId),
-        getCurrentMembers('workspace', workspaceId)
-      ]);
-      setAvailableMembers(available || []);
-      const currentIds = new Set((current || []).map(m => m.id));
-      setCurrentMemberIds(currentIds);
-      setSelectedMemberIds(new Set(currentIds));
-    } catch (error) {
-      console.error('Error fetching workspace members:', error);
-      Alert.alert('Error', 'Failed to load members. Please try again.');
+      const res = await getWorkspaceMembers(workspaceId);
+
+      // normalize response: support [success, payload], direct array, or { members: [...] }
+      let data;
+      if (Array.isArray(res) && typeof res[0] === 'boolean') {
+        const [success, payload] = res;
+        if (!success) throw payload;
+        data = payload;
+      } else {
+        data = res;
+      }
+
+      const membersArray = Array.isArray(data)
+        ? data
+        : (Array.isArray(data?.members) ? data.members : []);
+
+      setMembers(membersArray);
+    } catch (err) {
+      console.error('fetchMembers error', err);
+      Alert.alert('Erreur', 'Impossible de charger les membres.');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleMember = (memberId) => {
-    const newSelected = new Set(selectedMemberIds);
-    if (newSelected.has(memberId)) newSelected.delete(memberId);
-    else newSelected.add(memberId);
-    setSelectedMemberIds(newSelected);
-  };
+  useEffect(() => {
+    if (open && workspaceId) {
+      fetchMembers();
+    } else if (!open) {
+      // reset local form when closed
+      setEmail('');
+      setMembers([]);
+    }
+  }, [open, workspaceId]);
 
-  const handleDone = async () => {
+  const handleAddMember = async () => {
     if (!workspaceId) return;
-    setSaving(true);
+    const mail = (email || '').trim().toLowerCase();
+    if (!mail) {
+      Alert.alert('Erreur', 'Please enter an email');
+      return;
+    }
+    setSubmitting(true);
     try {
-      const membersToAdd = [...selectedMemberIds].filter(id => !currentMemberIds.has(id));
-      const membersToRemove = [...currentMemberIds].filter(id => !selectedMemberIds.has(id));
-
-      const addPromises = membersToAdd.map(id => addMember('workspace', workspaceId, id));
-      const removePromises = membersToRemove.map(id => removeMember('workspace', workspaceId, id));
-
-      await Promise.all([...addPromises, ...removePromises]);
-
-      if (typeof onMembersUpdated === 'function') onMembersUpdated();
-      if (typeof onClose === 'function') onClose();
-    } catch (error) {
-      console.error('Error updating workspace members:', error);
-      Alert.alert('Error', 'Failed to update members. Please try again.');
+      const res = await fetch(`/api/workspaces/${workspaceId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: mail }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Add member failed');
+      }
+      const json = await res.json();
+      // mettre à jour la liste locale
+      await fetchMembers();
+      setEmail('');
+      Alert.alert('Succès', 'Member added.');
+      // notifier parent
+      try { await Promise.resolve(onMembersUpdated(json)); } catch (_) {}
+    } catch (err) {
+      console.error('handleAddMember error', err);
+      Alert.alert('Erreur', err.message || 'Could not add member.');
     } finally {
-      setSaving(false);
+      setSubmitting(false);
     }
   };
 
-  const filteredMembers = availableMembers.filter(member => {
-    const q = (searchQuery || '').toLowerCase();
-    return (
-      member.fullName?.toLowerCase().includes(q) ||
-      member.username?.toLowerCase().includes(q)
+  const handleRemoveMember = async (memberId) => {
+    if (!workspaceId || !memberId) return;
+    Alert.alert(
+      'Confirm',
+      'Remove this member from the workspace?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: async () => {
+          setSubmitting(true);
+          try {
+            const res = await fetch(`/api/workspaces/${workspaceId}/members/${memberId}`, { method: 'DELETE' });
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.message || 'Remove failed');
+            }
+            await fetchMembers();
+            Alert.alert('Succès', 'Member removed.');
+            try { await Promise.resolve(onMembersUpdated()); } catch (_) {}
+          } catch (err) {
+            console.error('handleRemoveMember error', err);
+            Alert.alert('Erreur', 'Could not remove member.');
+          } finally {
+            setSubmitting(false);
+          }
+        } },
+      ]
     );
-  });
-
-  const hasChanges = () => {
-    if (currentMemberIds.size !== selectedMemberIds.size) return true;
-    for (const id of currentMemberIds) if (!selectedMemberIds.has(id)) return true;
-    return false;
   };
 
   return (
-    <BottomDrawer visible={visible} onClose={onClose}>
-      <Text className="text-2xl font-bold text-white mb-2">Manage Members</Text>
-      <Text className="text-gray-400 text-sm mb-6">Add or remove members for this workspace</Text>
+    <Modal
+      visible={open}
+      transparent
+      animationType="slide"
+      onRequestClose={() => { if (!submitting) onClose(); }}
+    >
+      <Pressable className="flex-1 bg-black/50" onPress={() => { if (!submitting) onClose(); }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }} keyboardShouldPersistTaps="handled">
+            <View onStartShouldSetResponder={() => true} className="absolute bottom-0 left-0 right-0 bg-[#2a2a2a] p-4 rounded-t-xl">
+              <Text className="text-white text-lg font-semibold mb-3">Manage Workspace Members</Text>
 
-      <View className="mb-4">
-        <View className="bg-[#1a1a1a] flex-row items-center px-4 py-3 rounded-xl">
-          <Ionicons name="search" size={20} color="#6B778C" />
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search members..."
-            placeholderTextColor="#6B778C"
-            className="flex-1 text-white ml-2 text-base"
-          />
-          {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#6B778C" />
-            </Pressable>
-          )}
-        </View>
-      </View>
+              <View className="mb-3">
+                <Text className="text-sm text-gray-300 mb-1">Add member by email</Text>
+                <View className="flex-row">
+                  <TextInput
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="user@example.com"
+                    placeholderTextColor="#6B728C"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    className="bg-[#1a1a1a] text-white px-3 py-2 rounded flex-1"
+                  />
+                  <TouchableOpacity onPress={handleAddMember} disabled={submitting} className="ml-3 bg-green-500 px-4 justify-center rounded">
+                    <Text className="text-white font-semibold">{submitting ? '...' : 'Add'}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
 
-      {loading ? (
-        <View className="py-12 items-center">
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text className="text-gray-400 mt-4">Loading members...</Text>
-        </View>
-      ) : filteredMembers.length === 0 ? (
-        <View className="py-12 items-center">
-          <Ionicons name="people-outline" size={64} color="#6B778C" />
-          <Text className="text-gray-400 mt-4 text-center">
-            {searchQuery ? 'No members found' : 'No members available'}
-          </Text>
-          {searchQuery && <Text className="text-gray-500 text-sm mt-2">Try a different search term</Text>}
-        </View>
-      ) : (
-        <>
-          <ScrollView className="max-h-96 mb-4" showsVerticalScrollIndicator={false}>
-            {filteredMembers.map(member => {
-              const isSelected = selectedMemberIds.has(member.id);
-              const memberColor = getMemberColor(member.id);
-              const initials = member.initials || getMemberInitials(member.fullName);
-              return (
+              <View className="mb-3">
+                <Text className="text-sm text-gray-300 mb-2">Members</Text>
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : members.length === 0 ? (
+                  <Text className="text-gray-400">No members</Text>
+                ) : (
+                  members.map((m, idx) => (
+                    <View key={`${m.id ?? m.userId ?? m.email ?? m.username ?? idx}`} className="flex-row items-center justify-between py-2">
+                      <View>
+                        <Text className="text-white font-semibold">{m.name || m.fullName || m.username || m.email}</Text>
+                        <Text className="text-gray-400 text-xs">{m.email || m.username || ''}</Text>
+                      </View>
+
+                      <TouchableOpacity onPress={() => handleRemoveMember(m.id ?? m.userId)} disabled={submitting} className="bg-red-500 px-3 py-1 rounded">
+                        <Text className="text-white">Remove</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                )}
+              </View>
+
+              <View className="flex-row gap-3">
                 <Pressable
-                  key={member.id}
-                  onPress={() => toggleMember(member.id)}
-                  className="flex-row items-center py-3 px-2 active:bg-neutral-800 rounded-lg"
+                  onPress={() => { if (!submitting) onClose(); }}
+                  disabled={submitting}
+                  className="flex-1 bg-[#1a1a1a] py-3 rounded-xl items-center justify-center"
                 >
-                  <View style={{ backgroundColor: memberColor }} className="w-10 h-10 rounded-full items-center justify-center mr-3">
-                    <Text className="text-white text-sm font-bold">{initials}</Text>
-                  </View>
-
-                  <View className="flex-1">
-                    <Text className="text-white text-base font-medium">{member.fullName}</Text>
-                    {member.username && <Text className="text-gray-500 text-sm">@{member.username}</Text>}
-                  </View>
-
-                  <View className={`w-6 h-6 rounded items-center justify-center border-2 ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-600'}`}>
-                    {isSelected && <Ionicons name="checkmark" size={16} color="white" />}
-                  </View>
+                  <Text className="text-white">Close</Text>
                 </Pressable>
-              );
-            })}
+
+                <Pressable
+                  onPress={fetchMembers}
+                  disabled={loading}
+                  className="flex-1 bg-[#2563EB] py-3 rounded-xl items-center justify-center"
+                >
+                  <Text className="text-white font-semibold">Refresh</Text>
+                </Pressable>
+              </View>
+            </View>
           </ScrollView>
-
-          <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-gray-400 text-sm">
-              {selectedMemberIds.size} member{selectedMemberIds.size !== 1 ? 's' : ''} selected
-            </Text>
-            {hasChanges() && <Text className="text-blue-500 text-sm font-medium">Changes pending</Text>}
-          </View>
-
-          <View className="flex-row gap-3">
-            <Pressable onPress={onClose} disabled={saving} className="flex-1 bg-[#1a1a1a] py-4 rounded-xl active:opacity-70">
-              <Text className="text-white text-center font-semibold text-base">Cancel</Text>
-            </Pressable>
-
-            <Pressable onPress={handleDone} disabled={saving || !hasChanges()} className={`flex-1 py-4 rounded-xl ${saving || !hasChanges() ? 'bg-gray-700' : 'bg-blue-600'}`}>
-              <Text className={`text-center font-semibold text-base ${saving || !hasChanges() ? 'text-gray-500' : 'text-white'}`}>
-                {saving ? 'Saving...' : 'Done'}
-              </Text>
-            </Pressable>
-          </View>
-        </>
-      )}
-    </BottomDrawer>
+        </KeyboardAvoidingView>
+      </Pressable>
+    </Modal>
   );
 };
 
