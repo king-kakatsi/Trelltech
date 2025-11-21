@@ -1,0 +1,8 @@
+// The specification book link that gives informations about the project:
+https://docs.google.com/document/d/1joMTwPse7XXPqUa2gYcHpmWd-BJMX0xu/edit?usp=sharing&rtpof=true&sd=true
+
+
+// The wireframe link have a general view of the application
+https://excalidraw.com/?name=TrellTech#room=61a759293de3a2b03b33,K-tH_1t_BweuB4DsIk0UJw
+
+

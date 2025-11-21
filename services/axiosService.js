@@ -32,7 +32,7 @@ export function createAxiosInstance(
   });
 
   instance.interceptors.request.use((config) => {
-    const token = fetchFromLocalStorage('access_token');
+    const token = fetchFromLocalStorage('trello_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -94,7 +94,6 @@ export async function getFromApi(
     }
     return [false, result.data];
   } catch (error) {
-    console.log("DEBUG - axios get error", error);
     return [false, error.response?.data || { message: "Request failed" }];
   }
 }

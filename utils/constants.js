@@ -1,10 +1,18 @@
-export const REDDIT_CONFIG = {
-  CLIENT_ID: 'dQw4w9WgXcQ', // TODO: REMPLACE real my Client ID
-  REDIRECT_URI: 'exp://192.168.1.123:8081', // TODO: REMPLACE by my IP
-  RESPONSE_TYPE: 'token',
-  SCOPE: 'identity read subscribe mysubreddits',
-  STATE: 'random_string_12345',
+export const TRELLO_CONFIG = {
+  APP_NAME: process.env.EXPO_PUBLIC_APP_NAME,
+  API_BASE_URL: process.env.EXPO_PUBLIC_API_BASE_URL,
+  API_KEY: process.env.EXPO_PUBLIC_TRELLTECH_API_KEY,
+  OAUTH_CALLBACK: process.env.EXPO_PUBLIC_OAUTH_CALLBACK,
+  SCOPES: process.env.EXPO_PUBLIC_SCOPES,
 };
 
-export const REDDIT_API_BASE = 'https://oauth.reddit.com';
-export const REDDIT_AUTH_URL = 'https://www.reddit.com/api/v1/authorize';
+export const COLORS = {
+  primary: "#0079BF",
+  secondary: "#5AAC44",
+  danger: "#EB5A46",
+  warning: "#F2D600",
+  dark: "#172B4D",
+  gray: "#6B778C",
+  lightGray: "#DFE1E6",
+  background: "#FAFBFC",
+};
