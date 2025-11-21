@@ -1,69 +1,66 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import BottomDrawer from '../ui/BottomDrawer';
 import BoardList from './BoardList';
 
-export default function WorkspaceAccordion({ id, name, boards = [], onEdit, onDelete }) {
+export default function WorkspaceAccordion({ id, name, boards = [] }) {
   const [open, setOpen] = useState(false);
 
   // color helpers (kept consistent with boards page)
 
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [suppressNextPress, setSuppressNextPress] = useState(false);
 
-  const handleLongPress = () => {
-    // prevent the immediate onPress toggle after long press
-    setSuppressNextPress(true);
-    setMenuVisible(true);
-    // clear suppression after a short time
-    setTimeout(() => setSuppressNextPress(false), 500);
-  };
+  // const renderMemberChip = (member, index) => (
+  //   <View
+  //     key={member.id || `${index}`}
+  //     style={{ backgroundColor: getInitialsColor(index) }}
+  //     className="w-7 h-7 rounded-full justify-center items-center mr-2"
+  //   >
+  //     <Text className="text-white text-xs font-bold">
+  //       {member.initials || (member.fullName || '').substring(0, 2).toUpperCase()}
+  //     </Text>
+  //   </View>
+  // );
 
-  const handlePress = () => {
-    if (suppressNextPress) {
-      setSuppressNextPress(false);
-      return;
-    }
-    setOpen(!open);
-  };
+  // const renderBoardCard = (item) => {
 
-  const handleEdit = () => {
-    setMenuVisible(false);
-    if (typeof onEdit === 'function') onEdit(id);
-    else console.warn('Edit clicked for workspace', id);
-  };
 
-  const handleDelete = () => {
-    setMenuVisible(false);
-    if (typeof onDelete === 'function') onDelete(id);
-    else console.warn('Delete clicked for workspace', id);
-  };
+  //   return (
+
+  //   );
+  // };
 
   return (
     <View className="mb-3 bg-neutral-800 rounded-md shadow-sm border border-neutral-700 overflow-hidden">
       {/* HEADER */}
       <TouchableOpacity
-        onPress={handlePress}
-        onLongPress={handleLongPress}
+        onPress={() => setOpen(!open)}
         className="flex-row items-center justify-between px-3 py-3"
       >
         <View className="flex-row items-center gap-3">
-        <View className="flex-row items-center">
-              {/* Workspace Icon */}
-              {/* href={`workspace/${id}/boards`} */}
+          <Link href={`workspace/${id}/boards`} className="">
+            <View className="flex-row items-center">
               <View className="w-8 h-8 rounded-full bg-blue-200 items-center justify-center mr-3">
                 <Text className="font-bold text-center text-neutral-900">
                   {(name || '').charAt(0)?.toUpperCase() || '?'}
                 </Text>
               </View>
-
-              {/* Workspace Name */}
               <Text className="text-white text-base">
                 {name}
               </Text>
             </View>
+          </Link>
+          {/* <View className="flex-row items-center">
+            <View className="w-8 h-8 rounded-full bg-blue-200 items-center justify-center mr-3">
+              <Text className="font-bold text-center text-neutral-900">
+                {(name || '').charAt(0)?.toUpperCase() || '?'}
+              </Text>
+            </View>
+            <Text className="text-white text-base">
+              {name}
+            </Text>
+          </View> */}
         </View>
 
         {open ? (
@@ -73,9 +70,19 @@ export default function WorkspaceAccordion({ id, name, boards = [], onEdit, onDe
         )}
       </TouchableOpacity>
 
-      {/* Context menu shown on long press */}
-      <BottomDrawer/>
-
+      {/* LISTE DES BOARDS (reproduit le même design que la page Boards) */}
+      {/* {open && (
+        <View className="p-3">
+          {boards.length === 0 ? (
+            <View className="py-6 items-center">
+              <Ionicons name="folder-open-outline" size={28} color="#6b7280" />
+              <Text className="text-neutral-400 mt-2">No boards in this workspace</Text>
+            </View>
+          ) : (
+            boards.map(b => renderBoardCard(b))
+          )}
+        </View>
+      )} */}
       {open && (
         <View className="p-3">
           {boards.length === 0 ? (
@@ -84,6 +91,7 @@ export default function WorkspaceAccordion({ id, name, boards = [], onEdit, onDe
               <Text className="text-neutral-400 mt-2">No boards in this workspace</Text>
             </View>
           ) : (
+            // boards.map(b => renderBoardCard(b))
             <BoardList boards={boards} />
           )}
         </View>

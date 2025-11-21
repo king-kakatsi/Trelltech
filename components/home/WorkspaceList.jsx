@@ -1,9 +1,12 @@
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { useAuth } from "../../contexts/AuthContext";
 import WorkspaceAccordion from "./WorkspaceAccordion";
 
 export default function WorkspaceList({workspaces,loading, refreshing}) {
   const { token, user } = useAuth();
+  const ok = () =>{
+    Alert.alert("ok")
+  }
   // const [workspaces, setWorkspaces] = useState([]);
   // const [loading, setLoading] = useState(false);
   // const [refreshing, setRefreshing] = useState(false);
@@ -82,12 +85,13 @@ export default function WorkspaceList({workspaces,loading, refreshing}) {
         {
           loading ? "" :
           workspaces.map((ws) => (
-            <WorkspaceAccordion
-              key={ws.id}
+            <View key={ws.id} onClick={ok} className="" > 
+              <WorkspaceAccordion
               id={ws.id}
               name={ws.displayName}
               boards={ws.idBoards}
             />
+            </View>
           ))
         }
       </ScrollView>
