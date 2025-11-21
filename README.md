@@ -46,14 +46,40 @@ TrellTech transforms your mobile device into a powerful project management tool 
 
 ## Screenshots
 
+### Login page
+![login](./docs/screenshots/trelltech_login.jpeg)
+
+### User connexion to trello app
+![Authentification](./docs/screenshots/trelltech_oauth.jpeg)
+
+### User profile
+![Workspaces list](./docs/screenshots/trelltech_profile.jpeg)
+
 ### Home & Workspaces
-![Workspaces list](./docs/screenshots/workspaces.png)
+![Workspaces list](./docs/screenshots/trelltech_workspaces.jpeg)
 
-### Board Kanban View
-![Kanban board](./docs/screenshots/kanban.png)
+### Management of workspace members 
+![action for Workspace members](./docs/screenshots/trelltech_board_action.jpeg)
 
-### Card Details
-![Card detail](./docs/screenshots/card_detail.png)
+### Action on workspace 
+![workspace action](./docs/screenshots/trelltech_workspace_action.jpeg)
+
+### User boards
+![Boards](./docs/screenshots/trelltech_boards.jpeg)
+
+### Board creation
+![board creation form ](./docs/screenshots/trelltech_add_board.jpeg)
+
+
+### User board detail
+![Board detail ](./docs/screenshots/trelltech_board.jpeg)
+
+
+### Management of board members 
+![action for board members](./docs/screenshots/trelltech_manage_board_members.jpeg)
+
+
+
 
 ## Quick Links
 
@@ -84,30 +110,6 @@ TrellTech transforms your mobile device into a powerful project management tool 
 - **Supported OS**: iOS 13+, Android 6+
 - **External API**: Trello REST API v1
 
-## Project Structure
-
-```
-trelltech/
-├── app/                           # Expo Router pages
-│   ├── (auth)/                   # Authentication screens
-│   ├── (tabs)/                   # Bottom tab navigation
-│   ├── workspace/                # Workspace-related screens
-│   ├── _layout.jsx               # Root layout
-│   └── index.jsx                 # Entry point
-├── components/                    # Reusable UI components
-│   ├── WorkspaceCard.jsx
-│   ├── BoardCard.jsx
-│   └── TaskCard.jsx
-├── contexts/                      # React Context providers
-│   └── AuthContext.jsx
-├── services/                      # API and storage services
-│   ├── axiosService.js
-│   ├── localStorageService.js
-│   └── trello.js
-├── constants/                     # Configuration constants
-│   └── config.js
-└── docs/                         # Documentation
-```
 
 ## Getting Started
 
