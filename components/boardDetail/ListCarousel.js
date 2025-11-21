@@ -18,7 +18,7 @@ export default function ListCarousel({
       onIndexChange(index);
     }
   };
-
+  console.log('DEBUG - lalala', workspaceId);
   return (
     <>
       {lists.length > 0 && (

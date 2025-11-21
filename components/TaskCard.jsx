@@ -6,7 +6,7 @@ export default function TaskCard({ workspaceId, listId, boardId, card }) {
   const handlePress = () => {
     console.log(`DEBUG - go to card detail - /workspace/${workspaceId}/board/${boardId}/card/${card.id}`);
 
-    if (card?.labels?.[0]?.idOrganization && card?.labels?.[0]?.idBoard && card?.id) {
+    if (workspaceId && boardId && card?.id) {
       router.push(`workspace/${workspaceId}/board/${boardId}/card/${card.id}`);
     }
   };

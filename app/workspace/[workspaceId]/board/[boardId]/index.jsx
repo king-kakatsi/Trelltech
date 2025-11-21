@@ -52,7 +52,7 @@ export default function BoardDetailScreen() {
   useEffect(() => {
     loadBoardData();
   }, [boardId]);
-
+  
   const loadBoardData = async () => {
     try {
       setLoading(true);
@@ -255,7 +255,7 @@ export default function BoardDetailScreen() {
             onOpenListMenu={handleOpenListMenu}
             screenWidth={SCREEN_WIDTH}
             screenHeight={SCREEN_HEIGHT}
-            workspaceId={board?.idOrganisation}
+            workspaceId={workspaceId}
             boardId={board?.id}
           />
         ) : (
