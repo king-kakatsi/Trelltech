@@ -47,7 +47,7 @@ TrellTech transforms your mobile device into a powerful project management tool 
 ## Screenshots
 
 ### Home & Workspaces
-![Workspaces list](./docs/screenshots/workspaces.png)
+![Workspaces list](./docs/screenshots/trelltech_workspaces.jpeg)
 
 ### Board Kanban View
 ![Kanban board](./docs/screenshots/kanban.png)
@@ -84,30 +84,6 @@ TrellTech transforms your mobile device into a powerful project management tool 
 - **Supported OS**: iOS 13+, Android 6+
 - **External API**: Trello REST API v1
 
-## Project Structure
-
-```
-trelltech/
-├── app/                           # Expo Router pages
-│   ├── (auth)/                   # Authentication screens
-│   ├── (tabs)/                   # Bottom tab navigation
-│   ├── workspace/                # Workspace-related screens
-│   ├── _layout.jsx               # Root layout
-│   └── index.jsx                 # Entry point
-├── components/                    # Reusable UI components
-│   ├── WorkspaceCard.jsx
-│   ├── BoardCard.jsx
-│   └── TaskCard.jsx
-├── contexts/                      # React Context providers
-│   └── AuthContext.jsx
-├── services/                      # API and storage services
-│   ├── axiosService.js
-│   ├── localStorageService.js
-│   └── trello.js
-├── constants/                     # Configuration constants
-│   └── config.js
-└── docs/                         # Documentation
-```
 
 ## Getting Started
 
