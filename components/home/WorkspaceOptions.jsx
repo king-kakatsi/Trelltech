@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { deleteWorkspace } from '../../services/workspaces';
 import BottomDrawer from '../ui/BottomDrawer';
+import ManageWorkspaceMembers from '../workspace/ManageWorkspaceMembers';
 import UpdateWorkspace from '../workspace/UpdateWorkspace';
 
 const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMenuVisible, selectedWorkspace = null, onRefresh = null}) => {
     const router = useRouter();
     const [isEditDrawerVisible, setEditDrawerVisible] = useState(false);
+    const [isAddMembersDrawerVisible, setAddMembersDrawerVisible] = useState(false); // new state
 
     // actions for drawer options
       const handleAccess = () => {
@@ -63,11 +65,11 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
     
       const handleAddMembers = () => {
         if (!selectedAccordionId) return;
-        setListMenuVisible(false);
-        const id = selectedAccordionId;
-        setSelectedAccordionId(null);
-        router.push(`workspace/${id}/members/add`); // adapter la route si nécessaire
+        // setListMenuVisible(false);
+        setAddMembersDrawerVisible(true);
+        // keep selectedAccordionId intact if parent relies on it; we close it when drawer completes
       };
+
     return (
         <View className="p-4">
           <TouchableOpacity onPress={handleAccess} className="py-3 px-4 bg-blue-600 rounded-md mb-2">
@@ -83,7 +85,7 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleAddMembers} className="py-3 px-4 bg-green-600 rounded-md">
-            <Text className="text-white">Add members</Text>
+            <Text className="text-white">Manage members</Text>
           </TouchableOpacity>
 
           {/* Drawer / modal pour l'édition du workspace */}
@@ -108,6 +110,23 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
               }}
             />
           </BottomDrawer>
+
+          {/* Render ManageWorkspaceMembers directly — it renders its own BottomDrawer */}
+          <ManageWorkspaceMembers
+            visible={isAddMembersDrawerVisible}
+            workspaceId={selectedAccordionId}
+            onClose={() => {
+              setAddMembersDrawerVisible(false);
+              setListMenuVisible(false);
+              setSelectedAccordionId(null);
+            }}
+            onMembersUpdated={() => {
+              try { if (typeof onRefresh === 'function') onRefresh(); } catch(e){ console.error(e); }
+              setAddMembersDrawerVisible(false);
+              setListMenuVisible(false);
+              setSelectedAccordionId(null);
+            }}
+          />
         </View>
     );
 };

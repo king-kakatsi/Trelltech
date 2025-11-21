@@ -3,15 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { addMember, getAvailableMembers, getCurrentMembers, removeMember } from '../../services/memberService';
 import { getMemberColor, getMemberInitials } from '../../utils/memberColors';
-import BottomDrawer from './BottomDrawer';
+import BottomDrawer from '../ui/BottomDrawer';
 
-export default function AddMembersDrawer({ 
-  visible, 
-  onClose, 
-  instanceType,
-  instanceId,
-  onMembersUpdated
-}) {
+const ManageWorkspaceMembers = ({ visible, onClose, workspaceId, onMembersUpdated }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [availableMembers, setAvailableMembers] = useState([]);
   const [currentMemberIds, setCurrentMemberIds] = useState(new Set());
@@ -25,23 +19,22 @@ export default function AddMembersDrawer({
     } else {
       setSearchQuery('');
     }
-  }, [visible, instanceId, instanceType]);
+  }, [visible, workspaceId]);
 
   const fetchMembers = async () => {
+    if (!workspaceId) return;
     setLoading(true);
     try {
       const [available, current] = await Promise.all([
-        getAvailableMembers(instanceType, instanceId),
-        getCurrentMembers(instanceType, instanceId)
+        getAvailableMembers('workspace', workspaceId),
+        getCurrentMembers('workspace', workspaceId)
       ]);
-
-      setAvailableMembers(available);
-      
-      const currentIds = new Set(current.map(m => m.id));
+      setAvailableMembers(available || []);
+      const currentIds = new Set((current || []).map(m => m.id));
       setCurrentMemberIds(currentIds);
       setSelectedMemberIds(new Set(currentIds));
     } catch (error) {
-      console.error('Error fetching members:', error);
+      console.error('Error fetching workspace members:', error);
       Alert.alert('Error', 'Failed to load members. Please try again.');
     } finally {
       setLoading(false);
@@ -50,37 +43,27 @@ export default function AddMembersDrawer({
 
   const toggleMember = (memberId) => {
     const newSelected = new Set(selectedMemberIds);
-    if (newSelected.has(memberId)) {
-      newSelected.delete(memberId);
-    } else {
-      newSelected.add(memberId);
-    }
+    if (newSelected.has(memberId)) newSelected.delete(memberId);
+    else newSelected.add(memberId);
     setSelectedMemberIds(newSelected);
   };
 
   const handleDone = async () => {
+    if (!workspaceId) return;
     setSaving(true);
     try {
       const membersToAdd = [...selectedMemberIds].filter(id => !currentMemberIds.has(id));
       const membersToRemove = [...currentMemberIds].filter(id => !selectedMemberIds.has(id));
 
-      const addPromises = membersToAdd.map(memberId => 
-        addMember(instanceType, instanceId, memberId)
-      );
-      
-      const removePromises = membersToRemove.map(memberId => 
-        removeMember(instanceType, instanceId, memberId)
-      );
+      const addPromises = membersToAdd.map(id => addMember('workspace', workspaceId, id));
+      const removePromises = membersToRemove.map(id => removeMember('workspace', workspaceId, id));
 
       await Promise.all([...addPromises, ...removePromises]);
 
-      if (onMembersUpdated) {
-        onMembersUpdated();
-      }
-      
-      onClose();
+      if (typeof onMembersUpdated === 'function') onMembersUpdated();
+      if (typeof onClose === 'function') onClose();
     } catch (error) {
-      console.error('Error updating members:', error);
+      console.error('Error updating workspace members:', error);
       Alert.alert('Error', 'Failed to update members. Please try again.');
     } finally {
       setSaving(false);
@@ -88,38 +71,23 @@ export default function AddMembersDrawer({
   };
 
   const filteredMembers = availableMembers.filter(member => {
-    const searchLower = searchQuery.toLowerCase();
+    const q = (searchQuery || '').toLowerCase();
     return (
-      member.fullName?.toLowerCase().includes(searchLower) ||
-      member.username?.toLowerCase().includes(searchLower)
+      member.fullName?.toLowerCase().includes(q) ||
+      member.username?.toLowerCase().includes(q)
     );
   });
 
-  const getInstanceLabel = () => {
-    switch (instanceType) {
-      case 'workspace': return 'workspace';
-      case 'board': return 'board';
-      case 'card': return 'card';
-      default: return 'item';
-    }
-  };
-
   const hasChanges = () => {
     if (currentMemberIds.size !== selectedMemberIds.size) return true;
-    for (const id of currentMemberIds) {
-      if (!selectedMemberIds.has(id)) return true;
-    }
+    for (const id of currentMemberIds) if (!selectedMemberIds.has(id)) return true;
     return false;
   };
 
   return (
     <BottomDrawer visible={visible} onClose={onClose}>
-      <Text className="text-2xl font-bold text-white mb-2">
-        Manage Members
-      </Text>
-      <Text className="text-gray-400 text-sm mb-6">
-        Add or remove members for this {getInstanceLabel()}
-      </Text>
+      <Text className="text-2xl font-bold text-white mb-2">Manage Members</Text>
+      <Text className="text-gray-400 text-sm mb-6">Add or remove members for this workspace</Text>
 
       <View className="mb-4">
         <View className="bg-[#1a1a1a] flex-row items-center px-4 py-3 rounded-xl">
@@ -150,59 +118,32 @@ export default function AddMembersDrawer({
           <Text className="text-gray-400 mt-4 text-center">
             {searchQuery ? 'No members found' : 'No members available'}
           </Text>
-          {searchQuery && (
-            <Text className="text-gray-500 text-sm mt-2">
-              Try a different search term
-            </Text>
-          )}
+          {searchQuery && <Text className="text-gray-500 text-sm mt-2">Try a different search term</Text>}
         </View>
       ) : (
         <>
-          <ScrollView 
-            className="max-h-96 mb-4"
-            showsVerticalScrollIndicator={false}
-          >
-            {filteredMembers.map((member) => {
+          <ScrollView className="max-h-96 mb-4" showsVerticalScrollIndicator={false}>
+            {filteredMembers.map(member => {
               const isSelected = selectedMemberIds.has(member.id);
               const memberColor = getMemberColor(member.id);
               const initials = member.initials || getMemberInitials(member.fullName);
-
               return (
                 <Pressable
                   key={member.id}
                   onPress={() => toggleMember(member.id)}
                   className="flex-row items-center py-3 px-2 active:bg-neutral-800 rounded-lg"
                 >
-                  <View 
-                    style={{ backgroundColor: memberColor }}
-                    className="w-10 h-10 rounded-full items-center justify-center mr-3"
-                  >
-                    <Text className="text-white text-sm font-bold">
-                      {initials}
-                    </Text>
+                  <View style={{ backgroundColor: memberColor }} className="w-10 h-10 rounded-full items-center justify-center mr-3">
+                    <Text className="text-white text-sm font-bold">{initials}</Text>
                   </View>
 
                   <View className="flex-1">
-                    <Text className="text-white text-base font-medium">
-                      {member.fullName}
-                    </Text>
-                    {member.username && (
-                      <Text className="text-gray-500 text-sm">
-                        @{member.username}
-                      </Text>
-                    )}
+                    <Text className="text-white text-base font-medium">{member.fullName}</Text>
+                    {member.username && <Text className="text-gray-500 text-sm">@{member.username}</Text>}
                   </View>
 
-                  <View 
-                    className={`w-6 h-6 rounded items-center justify-center border-2 ${
-                      isSelected 
-                        ? 'bg-blue-600 border-blue-600' 
-                        : 'border-gray-600'
-                    }`}
-                  >
-                    {isSelected && (
-                      <Ionicons name="checkmark" size={16} color="white" />
-                    )}
+                  <View className={`w-6 h-6 rounded items-center justify-center border-2 ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-600'}`}>
+                    {isSelected && <Ionicons name="checkmark" size={16} color="white" />}
                   </View>
                 </Pressable>
               );
@@ -213,34 +154,16 @@ export default function AddMembersDrawer({
             <Text className="text-gray-400 text-sm">
               {selectedMemberIds.size} member{selectedMemberIds.size !== 1 ? 's' : ''} selected
             </Text>
-            {hasChanges() && (
-              <Text className="text-blue-500 text-sm font-medium">
-                Changes pending
-              </Text>
-            )}
+            {hasChanges() && <Text className="text-blue-500 text-sm font-medium">Changes pending</Text>}
           </View>
 
           <View className="flex-row gap-3">
-            <Pressable
-              onPress={onClose}
-              disabled={saving}
-              className="flex-1 bg-[#1a1a1a] py-4 rounded-xl active:opacity-70"
-            >
-              <Text className="text-white text-center font-semibold text-base">
-                Cancel
-              </Text>
+            <Pressable onPress={onClose} disabled={saving} className="flex-1 bg-[#1a1a1a] py-4 rounded-xl active:opacity-70">
+              <Text className="text-white text-center font-semibold text-base">Cancel</Text>
             </Pressable>
 
-            <Pressable
-              onPress={handleDone}
-              disabled={saving || !hasChanges()}
-              className={`flex-1 py-4 rounded-xl ${
-                saving || !hasChanges() ? 'bg-gray-700' : 'bg-blue-600'
-              }`}
-            >
-              <Text className={`text-center font-semibold text-base ${
-                saving || !hasChanges() ? 'text-gray-500' : 'text-white'
-              }`}>
+            <Pressable onPress={handleDone} disabled={saving || !hasChanges()} className={`flex-1 py-4 rounded-xl ${saving || !hasChanges() ? 'bg-gray-700' : 'bg-blue-600'}`}>
+              <Text className={`text-center font-semibold text-base ${saving || !hasChanges() ? 'text-gray-500' : 'text-white'}`}>
                 {saving ? 'Saving...' : 'Done'}
               </Text>
             </Pressable>
@@ -249,4 +172,6 @@ export default function AddMembersDrawer({
       )}
     </BottomDrawer>
   );
-}
+};
+
+export default ManageWorkspaceMembers;
