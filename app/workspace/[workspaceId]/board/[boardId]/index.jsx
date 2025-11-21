@@ -255,6 +255,8 @@ export default function BoardDetailScreen() {
             onOpenListMenu={handleOpenListMenu}
             screenWidth={SCREEN_WIDTH}
             screenHeight={SCREEN_HEIGHT}
+            workspaceId={board?.idOrganisation}
+            boardId={board?.id}
           />
         ) : (
           <EmptyListsState
