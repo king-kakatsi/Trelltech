@@ -1,4 +1,4 @@
-import { deleteAllWithApi, getFromApi, postWithApi, updateWithApi } from "./axiosService";
+import { deleteAllWithApi, deleteWithApi, getFromApi, postWithApi, updateWithApi } from "./axiosService";
 import { fetchFromLocalStorage } from "./localStorageService";
 
 // const token = 'ATTA699410413122bd02f2e3b9be3ab68d9ca1754983909014257aebe51ba366362eD7365349';
@@ -133,6 +133,26 @@ export async function addMember(id, email, fullName) {
         return data;
     } catch (error) {
         console.error('Error adding member to workspace:', error);
+        throw error;
+    }
+}
+
+// New: remove a member from a workspace (organization)
+export async function deleteMember(id, idMember) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+
+        const endpoint = `/organizations/${id}/members/${idMember}?key=${apiKey}&token=${encodeURIComponent(token)}`;
+        console.log('DEBUG deleteMember endpoint:', endpoint);
+
+        // use deleteWithApi so we expect a 200 success by default
+        const [success, data] = await deleteWithApi(endpoint);
+
+        if (!success) throw data;
+        return data;
+    } catch (error) {
+        console.error('Error deleting member from workspace:', error);
         throw error;
     }
 }

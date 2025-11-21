@@ -126,12 +126,10 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
               onClose={() => setAddMembersDrawerVisible(false)}
               onMembersUpdated={() => {
                 // comportement identique à onUpdate d'UpdateWorkspace
-                setAddMembersDrawerVisible(false);
-                setListMenuVisible(false);
-                setSelectedAccordionId(null);
-                if (typeof onRefresh === 'function') {
-                  try { onRefresh(); } catch (e) { console.error('onRefresh callback error', e); }
-                }
+                // setAddMembersDrawerVisible(false);
+                // setListMenuVisible(false);
+                // setSelectedAccordionId(null);
+                onRefresh()
               }}
             />
           </BottomDrawer>

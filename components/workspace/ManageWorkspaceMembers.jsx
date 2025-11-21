@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { addMember, getWorkspaceMembers } from '../../services/workspaces';
+import { addMember, deleteMember, getWorkspaceMembers } from '../../services/workspaces';
 
 const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () => {}, onMembersUpdated = () => {} }) => {
   const [members, setMembers] = useState([]);
@@ -80,7 +80,7 @@ const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () =
       // refresh local list and UI
       await fetchMembers();
       setEmail('');
-      Alert.alert('Succès', 'Membre ajouté.');
+      // Alert.alert('Succès', 'Membre ajouté.');
       try { await Promise.resolve(onMembersUpdated(result)); } catch (_) {}
     } catch (err) {
       console.error('handleAddMember error', err);
@@ -94,24 +94,22 @@ const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () =
   const handleRemoveMember = async (memberId) => {
     if (!workspaceId || !memberId) return;
     Alert.alert(
-      'Confirm',
-      'Remove this member from the workspace?',
+      'Confirmation',
+      'Retirer ce membre de l\'espace de travail ?',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: async () => {
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Retirer', style: 'destructive', onPress: async () => {
           setSubmitting(true);
           try {
-            const res = await fetch(`/api/workspaces/${workspaceId}/members/${memberId}`, { method: 'DELETE' });
-            if (!res.ok) {
-              const err = await res.json().catch(() => ({}));
-              throw new Error(err.message || 'Remove failed');
-            }
+            // use deleteMember service (throws on failure)
+            const result = await deleteMember(workspaceId, memberId);
             await fetchMembers();
-            Alert.alert('Succès', 'Member removed.');
-            try { await Promise.resolve(onMembersUpdated()); } catch (_) {}
+            // Alert.alert('Succès', 'Membre supprimé.');
+            try { await Promise.resolve(onMembersUpdated(result)); } catch (_) {}
           } catch (err) {
             console.error('handleRemoveMember error', err);
-            Alert.alert('Erreur', 'Could not remove member.');
+            const message = (err && (err.message || err?.error)) || 'Impossible de supprimer le membre.';
+            Alert.alert('Erreur', message);
           } finally {
             setSubmitting(false);
           }
@@ -127,13 +125,21 @@ const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () =
       animationType="slide"
       onRequestClose={() => { if (!submitting) onClose(); }}
     >
-      <Pressable className="flex-1 bg-black/50" onPress={() => { if (!submitting) onClose(); }}>
+      {/* Container */}
+      <View className="flex-1">
+        {/* Backdrop: occupies full height, closes modal when pressed (but bottom-sheet sits above it) */}
+        <Pressable
+          className="flex-1 bg-black/50"
+          onPress={() => { if (!submitting) onClose(); }}
+        />
+
+        {/* Bottom-sheet positioned above the backdrop so taps inside it don't hit the backdrop */}
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
+          style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }}
         >
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }} keyboardShouldPersistTaps="handled">
-            <View onStartShouldSetResponder={() => true} className="absolute bottom-0 left-0 right-0 bg-[#2a2a2a] p-4 rounded-t-xl">
+            <View onStartShouldSetResponder={() => true} className="bg-[#2a2a2a] p-4 rounded-t-xl">
               <Text className="text-white text-lg font-semibold mb-3">Manage Workspace Members</Text>
 
               <View className="mb-3">
@@ -196,7 +202,7 @@ const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () =
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </Pressable>
+      </View>
     </Modal>
   );
 };
