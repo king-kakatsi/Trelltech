@@ -1,14 +1,40 @@
+import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
 
+export default function TaskCard({ workspaceId, listId, boardId, card }) {
+  const handlePress = () => {
+    console.log(`DEBUG - go to card detail - /workspace/${workspaceId}/board/${boardId}/card/${card.id}`);
 
-export default function TaskCard() {
-    return (
-        < View className = "flex-row items-center justify-between bg-white p-4 rounded-xl my-2 shadow" >
-            <View>
-              <Text className="text-base font-semibold">Card name</Text>
-              <Text className="text-xs text-gray-400 mt-1">Expiration date</Text>
+    if (card?.labels?.[0]?.idOrganization && card?.labels?.[0]?.idBoard && card?.id) {
+      router.push(`workspace/${workspaceId}/board/${boardId}/card/${card.id}`);
+    }
+  };
+
+  return (
+    <TouchableOpacity 
+      onPress={handlePress}
+      activeOpacity={0.7}
+      className="bg-gray-200 rounded-lg p-4 mb-4 shadow-md"
+    >
+      {/* Title - Bold and larger */}
+      <Text className="text-base font-bold text-gray-900 mb-2">{card.name}</Text>
+      
+      {/* Description - Smaller and lighter color */}
+      {card.desc ? (
+        <Text className="text-sm text-gray-600">{card.desc}</Text>
+      ) : null}
+
+      {/* Show members */}
+      {card.members && card.members.length > 0 && (
+        <View className="flex-row flex-wrap mt-3">
+          {card.members.map((member) => (
+            <View key={member.id} className="mr-2">
+              <Text className="text-xs text-indigo-700">@{member.username}</Text>
             </View>
-            <TouchableOpacity className="w-5 h-5 rounded-full border border-gray-400" />
-          </View >
-    );
+          ))}
+        </View>
+      )}
+    </TouchableOpacity>
+  );
 }

@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { deleteWorkspace } from '../../services/workspaces';
 import BottomDrawer from '../ui/BottomDrawer';
+import ManageWorkspaceMembers from '../workspace/ManageWorkspaceMembers'; // <-- added import
 import UpdateWorkspace from '../workspace/UpdateWorkspace';
 
 const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMenuVisible, selectedWorkspace = null, onRefresh = null}) => {
     const router = useRouter();
     const [isEditDrawerVisible, setEditDrawerVisible] = useState(false);
+    const [isAddMembersDrawerVisible, setAddMembersDrawerVisible] = useState(false); // new state
 
     // actions for drawer options
       const handleAccess = () => {
@@ -63,11 +65,12 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
     
       const handleAddMembers = () => {
         if (!selectedAccordionId) return;
-        setListMenuVisible(false);
-        const id = selectedAccordionId;
-        setSelectedAccordionId(null);
-        router.push(`workspace/${id}/members/add`); // adapter la route si nécessaire
+        // fermer le menu principal et ouvrir le drawer de gestion des membres
+        // setListMenuVisible(false);
+        setAddMembersDrawerVisible(true);
+        // garder selectedAccordionId intact; le reset se fait au onClose / onMembersUpdated
       };
+
     return (
         <View className="p-4">
           <TouchableOpacity onPress={handleAccess} className="py-3 px-4 bg-blue-600 rounded-md mb-2">
@@ -83,7 +86,7 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleAddMembers} className="py-3 px-4 bg-green-600 rounded-md">
-            <Text className="text-white">Add members</Text>
+            <Text className="text-white">Manage members</Text>
           </TouchableOpacity>
 
           {/* Drawer / modal pour l'édition du workspace */}
@@ -105,6 +108,28 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
                 setSelectedAccordionId(null);
                 onRefresh()
                 // si vous avez un refresh au parent, appelez le callback approprié (non fourni ici)
+              }}
+            />
+          </BottomDrawer>
+
+          {/* Drawer / modal pour la gestion des membres */}
+          <BottomDrawer
+            visible={isAddMembersDrawerVisible}
+            onClose={() => {
+              setAddMembersDrawerVisible(false);
+              // garder l'état du selectedAccordionId intact ici si nécessaire
+            }}
+          >
+            <ManageWorkspaceMembers
+              open={isAddMembersDrawerVisible}
+              workspace={selectedWorkspace}
+              onClose={() => setAddMembersDrawerVisible(false)}
+              onMembersUpdated={() => {
+                // comportement identique à onUpdate d'UpdateWorkspace
+                // setAddMembersDrawerVisible(false);
+                // setListMenuVisible(false);
+                // setSelectedAccordionId(null);
+                onRefresh()
               }}
             />
           </BottomDrawer>

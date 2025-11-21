@@ -31,14 +31,13 @@ export default function Index() {
     const initializeApp = async () => {
       if (!isLoading) {
         const hasSeenOnboarding = await fetchFromLocalStorage('hasSeenOnboarding');
-        
         setTimeout(() => {
           if (isAuthenticated) {
             router.replace('/(tabs)/home');
-          } else if (hasSeenOnboarding) {
-            router.replace('/(auth)/login');
-          } else {
+          } else if (!hasSeenOnboarding) {
             router.replace('/onboarding');
+          } else {
+            router.replace('/(auth)/login');
           }
         }, 1500);
       }

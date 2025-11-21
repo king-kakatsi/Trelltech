@@ -1,6 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
+import { View, ScrollView } from 'react-native';
 import KanbanView from '../Kanban';
 
 export default function ListCarousel({
@@ -9,8 +8,17 @@ export default function ListCarousel({
   onIndexChange,
   onOpenListMenu,
   screenWidth,
-  screenHeight
+  screenHeight,
+  workspaceId,
+  boardId,
 }) {
+  const handleScroll = (event) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / screenWidth);
+    if (index !== currentIndex) {
+      onIndexChange(index);
+    }
+  };
+
   return (
     <>
       {lists.length > 0 && (
@@ -29,21 +37,25 @@ export default function ListCarousel({
         </View>
       )}
 
-      <View className="flex-1 py-2">
-        <Carousel
-          width={screenWidth}
-          height={screenHeight - 260}
-          data={lists}
-          onSnapToItem={onIndexChange}
-          renderItem={({ item }) => (
-            <View className="flex-1 px-4">
+      <View className="flex-1 pb-6">
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={handleScroll}
+          decelerationRate="fast"
+        >
+          {lists.map((item) => (
+            <View key={item.id} style={{ width: screenWidth, paddingHorizontal: 16 }}>
               <KanbanView
                 listId={item?.id}
                 onOpenMenu={onOpenListMenu}
+                workspaceId={workspaceId}
+                boardId={boardId}
               />
             </View>
-          )}
-        />
+          ))}
+        </ScrollView>
       </View>
     </>
   );

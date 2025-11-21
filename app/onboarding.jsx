@@ -50,7 +50,7 @@ export default function OnboardingScreen() {
   };
 
   const handleGetStarted = async () => {
-    await saveInLocalStorage('hasSeenOnboarding', 'true');
+    await saveInLocalStorage('hasSeenOnboarding', true);
     router.replace('/(auth)/login');
   };
 
@@ -140,7 +140,9 @@ export default function OnboardingScreen() {
         />
 
         <View className="pb-8 px-6">
-          {renderDots()}
+          <View className="flex self-center">
+            {renderDots()}
+          </View>
           
           <Pressable
             onPress={handleNext}

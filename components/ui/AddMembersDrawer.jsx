@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import BottomDrawer from './BottomDrawer';
-import { getAvailableMembers, getCurrentMembers, addMember, removeMember } from '../../services/memberService';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { addMember, getAvailableMembers, getCurrentMembers, removeMember } from '../../services/memberService';
 import { getMemberColor, getMemberInitials } from '../../utils/memberColors';
+import BottomDrawer from './BottomDrawer';
 
 export default function AddMembersDrawer({ 
   visible, 

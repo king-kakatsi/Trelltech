@@ -1,10 +1,10 @@
+import { Text, TouchableOpacity, View, Pressable } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
-import { Pressable, Text } from 'react-native';
 import OptionsModal from '../../components/home/OptionsModal';
 import BottomDrawer from '../../components/ui/BottomDrawer';
 import { fetchFromLocalStorage } from "../../services/localStorageService";
