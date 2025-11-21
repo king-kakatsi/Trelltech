@@ -4,7 +4,6 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from '../../node_modules/expo-router/build/hooks';
 import { getBoard } from '../../services/workspaces';
-import { useRouter } from '../../node_modules/expo-router/build/hooks';
 
 const Board = ({ workspaceId, id }) => {
     const { token } = useAuth();
