@@ -22,33 +22,38 @@ export async function getBoard(id,token) {
 // }
 
 // Create a new board
-export const postBoard = async (displayName) => {
+export const postBoard = async (displayName, options = {}) => {
+    // options may contain: { desc, name, website }
     try {
-      const token = await fetchFromLocalStorage('trello_token');
-      if (token) {
-        const endpoint = `/organizations?displayName=${displayName}&key=${apiKey}&token=${token}`;
-        // const endpoint = `/boards/?key=${TRELLO_CONFIG.API_KEY}&token=${token}&name=${encodeURIComponent(boardName)}&idOrganization=${workspaceId}`;
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+
+        // build query params with displayName and any provided options
+        const params = [];
+        params.push(`displayName=${encodeURIComponent(displayName)}`);
+        if (options.desc !== undefined && options.desc !== null) {
+            params.push(`desc=${encodeURIComponent(options.desc)}`);
+        }
+        if (options.name !== undefined && options.name !== null) {
+            params.push(`name=${encodeURIComponent(options.name)}`);
+        }
+        if (options.website !== undefined && options.website !== null) {
+            params.push(`website=${encodeURIComponent(options.website)}`);
+        }
+        params.push(`key=${apiKey}`);
+        params.push(`token=${encodeURIComponent(token)}`);
+
+        const endpoint = `/organizations?${params.join('&')}`;
         console.log('DEBUG endpoint:', endpoint);
-        
-        // Add optional prefs like background color
-        let fullEndpoint = endpoint;
-        // if (prefs.backgroundColor) {
-        //   fullEndpoint += `&prefs_background=${prefs.backgroundColor}`;
-        // }
-        // if (prefs.permissionLevel) {
-        //   fullEndpoint += `&prefs_permissionLevel=${prefs.permissionLevel}`;
-        // }
-        
-        const [success, data] = await postWithApi(fullEndpoint);
+
+        // call API with endpoint only — no body
+        const [success, data] = await postWithApi(endpoint);
         console.log('DEBUG success:', success);
-        
+
         if (!success) throw data;
-        
         return data;
-      }
-      throw 'No token found';
     } catch (error) {
-      console.error('Error creating board:', error);
-      throw error;
+        console.error('Error creating board:', error);
+        throw error;
     }
-  };
+};
