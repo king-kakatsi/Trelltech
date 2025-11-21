@@ -1,6 +1,7 @@
 import { fetchFromLocalStorage } from './localStorageService';
 import { TRELLO_CONFIG } from '../utils/constants';
 import { getFromApi, postWithApi, updateWithApi } from './axiosService';
+import { getTemplateById } from '../utils/boardTemplates';
 
 export const getWorkspaceBoards = async (workspaceId) => {
   try {
@@ -127,31 +128,50 @@ export const getBoardDetails = async (boardId) => {
 };
 
 
-// Create a new board
-export const createBoard = async (workspaceId, boardName, prefs = {}) => {
+export const createBoard = async (workspaceId, { name, desc = '', template = 'blank' }) => {
   try {
     const token = await fetchFromLocalStorage('trello_token');
-    if (token) {
-      const endpoint = `/boards/?key=${TRELLO_CONFIG.API_KEY}&token=${token}&name=${encodeURIComponent(boardName)}&idOrganization=${workspaceId}`;
-      console.log('DEBUG createBoard endpoint:', endpoint);
-      
-      // Add optional prefs like background color
-      let fullEndpoint = endpoint;
-      if (prefs.backgroundColor) {
-        fullEndpoint += `&prefs_background=${prefs.backgroundColor}`;
-      }
-      if (prefs.permissionLevel) {
-        fullEndpoint += `&prefs_permissionLevel=${prefs.permissionLevel}`;
-      }
-      
-      const [success, data] = await postWithApi(fullEndpoint);
-      console.log('DEBUG createBoard success:', success);
-      
-      if (!success) throw data;
-      
-      return data;
+    if (!token) {
+      throw 'No token found';
     }
-    throw 'No token found';
+
+    // Build the endpoint with name and organization
+    // Use defaultLists=false to prevent Trello from auto-creating lists
+    let endpoint = `/boards/?key=${TRELLO_CONFIG.API_KEY}&token=${token}&name=${encodeURIComponent(name)}&idOrganization=${workspaceId}&defaultLists=false`;
+    
+    // Add description if provided
+    if (desc && desc.trim() !== '') {
+      endpoint += `&desc=${encodeURIComponent(desc)}`;
+    }
+    
+    console.log('DEBUG createBoard endpoint:', endpoint);
+    
+    const [success, boardData] = await postWithApi(endpoint);
+    console.log('DEBUG createBoard success:', success);
+    
+    if (!success) {
+      throw boardData;
+    }
+
+    // Get the selected template configuration
+    const templateConfig = getTemplateById(template);
+    
+    // Create lists if template has predefined lists
+    if (templateConfig && templateConfig.lists.length > 0) {
+      console.log('DEBUG Creating lists for template:', template);
+      
+      // Create lists sequentially to maintain order
+      for (const listName of templateConfig.lists) {
+        try {
+          const listData = await createList(boardData.id, listName);
+          console.log('DEBUG Created list:', listName);
+        } catch (error) {
+          console.error('Failed to create list:', listName, error);
+        }
+      }
+    }
+    
+    return boardData;
   } catch (error) {
     console.error('Error creating board:', error);
     throw error;

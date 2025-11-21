@@ -1,5 +1,6 @@
-import { Stack, useRouter } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useEffect, useState } from 'react';
 import WorkspaceList from '../../components/home/WorkspaceList';
@@ -26,41 +27,40 @@ export default function HomeScreen() {
   const router = useRouter();
 
   const fetchWorkspaces = async (currentToken) => {
-      try {
-        setLoading(true);
-        const data = await getAllWorkspaces(currentToken);
-  
-        // adapter selon la forme renvoyée par l'API
-        if (Array.isArray(data)) {
-          if (data[0] === true) {
-            setWorkspaces(data[1]);
-          }
-        } else {
-          console.warn('Format inattendu des workspaces:', data);
-          setWorkspaces([]);
-        }
-      } catch (err) {
-        setWorkspaces([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      setLoading(true);
+      const data = await getAllWorkspaces(currentToken);
 
-    const onRefresh = async () => {
-      if (!token) {
-        console.log("Pas de token disponible pour rafraîchir.");
-        return;
+      if (Array.isArray(data)) {
+        if (data[0] === true) {
+          setWorkspaces(data[1]);
+        }
+      } else {
+        console.warn('Unexpected workspace format:', data);
+        setWorkspaces([]);
       }
-      setRefreshing(true);
-      try {
-        setListMenuVisible(false)
-        await fetchWorkspaces(token);
-      } catch (err) {
-        console.warn("Erreur pendant le rafraîchissement :", err);
-      } finally {
-        setRefreshing(false);
-      }
-    };
+    } catch (err) {
+      setWorkspaces([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    if (!token) {
+      console.log("No token available for refresh");
+      return;
+    }
+    setRefreshing(true);
+    try {
+      setListMenuVisible(false)
+      await fetchWorkspaces(token);
+    } catch (err) {
+      console.warn("Error during refresh:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -72,45 +72,28 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (!token) {
-      console.log('Token pas encore disponible, attente...');
+      console.log('Token not yet available, waiting...');
       return;
     }
     fetchWorkspaces(token);
   }, [token]);
 
-
   return (
-    <View className="flex-1 bg-[#1a1a1a]">
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerStyle: { backgroundColor: 'transparent' },
-          headerTintColor: '#fff',
-          headerTitle: '',
-          headerRight: () => (
-            <Pressable
-              onPress={toggleListMenuVisible}
-              className="w-10 h-10 rounded-full bg-[#3a3a3a] items-center justify-center mr-4"
-              accessibilityLabel="Workspaces options"
-            >
-              <Text className="text-white text-lg">⋯</Text>
-            </Pressable>
-          ),
-        }}
-      />
-
-      <View className="px-4 pt-12 pb-6">
+    <SafeAreaView className="flex-1 bg-[#1a1a1a]" edges={['top']}>
+      <View className="bg-[#2a2a2a] px-4 py-6 flex-row items-center justify-between">
         <Text className="text-2xl font-bold text-white">Workspaces</Text>
       </View>
 
-      <ScrollView className="p-4">
-        <WorkspaceList workspaces={workspaces} loading={loading} refreshing={refreshing} />
-      </ScrollView>
-      {/* List Menu Drawer */}
-            <BottomDrawer visible={isListMenuVisible} onClose={() => setListMenuVisible(false)}>
-              <OptionsModal options={options} setOptions={setOptions} refreshWorkspaces={onRefresh}/>
-            </BottomDrawer>
-    </View>
+      <WorkspaceList 
+        workspaces={workspaces} 
+        loading={loading} 
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      />
+
+      <BottomDrawer visible={isListMenuVisible} onClose={() => setListMenuVisible(false)}>
+        <OptionsModal options={options} setOptions={setOptions} refreshWorkspaces={onRefresh}/>
+      </BottomDrawer>
+    </SafeAreaView>
   );
 }

@@ -2,12 +2,14 @@ import { Link } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { useRouter } from '../../node_modules/expo-router/build/hooks';
 import { getBoard } from '../../services/workspaces';
 
-const Board = ({ id }) => {
-    const { token, user } = useAuth();
+const Board = ({ workspaceId, id }) => {
+    const { token } = useAuth();
     const [board, setBoard] = useState({});
     const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
     const getBackgroundColor = (color) => {
         const colorMap = {
@@ -22,14 +24,6 @@ const Board = ({ id }) => {
             'grey': '#838C91'
         };
         return colorMap[color] || color || '#0079BF';
-    };
-
-    const getInitialsColor = (index) => {
-        const colors = [
-            '#0079BF', '#D29034', '#519839', '#B04632',
-            '#89609E', '#CD5A91', '#4BBF6B', '#00AECC'
-        ];
-        return colors[index % colors.length];
     };
 
     const bgColor = getBackgroundColor(board.backgroundColor);
@@ -63,7 +57,7 @@ const Board = ({ id }) => {
         }
     };
 
-    // n'appeler la requête que lorsque token est disponible
+    // requête que si token est disponible
     useEffect(() => {
         if (!token) {
             return;
@@ -72,15 +66,16 @@ const Board = ({ id }) => {
     }, [token, id]); // ajout de id dans les dépendances
 
     return (
-        // TODO: remplacer onPress par la navigation réelle de votre app (react-navigation / expo-router / react-router)
+        
         <TouchableOpacity
-
-        activeOpacity={0.8}
-        className="bg-neutral-800 rounded-lg mb-3 border border-neutral-700 overflow-hidden w-full"
-        onPress={() => {
-            // TODO: naviguer vers `workspace/${id}/board/${board.id}`
-            // Exemple: navigation.navigate('BoardScreen', { workspaceId: id, boardId: board.id })
-        }}
+            key={board.id}
+            activeOpacity={0.8}
+            className="bg-neutral-800 rounded-lg mb-3 border border-neutral-700 overflow-hidden w-full"
+            onPress={() => {router.push(`/workspace/${workspaceId}/board/${id}`)}}
+        // activeOpacity={0.8}
+        // className="bg-neutral-800 rounded-lg mb-3 border border-neutral-700 overflow-hidden w-full"
+        // onPress={() => {
+        // }}
     >
         <Link key={board.id} href={`/workspace/${board.idOrganization}/board/${board.id}`} className="w-full" >
             

@@ -2,7 +2,7 @@ import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, View 
 import { useAuth } from "../../contexts/AuthContext";
 import WorkspaceAccordion from "./WorkspaceAccordion";
 
-export default function WorkspaceList({workspaces,loading, refreshing}) {
+export default function WorkspaceList({ workspaces, loading, refreshing, onRefresh }) {
   const { token, user } = useAuth();
   const ok = () =>{
     Alert.alert("ok")
@@ -57,64 +57,45 @@ export default function WorkspaceList({workspaces,loading, refreshing}) {
   // }, [token]);
 
   return (
-    <View style={{ flex: 1 }}>
-      
-      {loading && (
-        <View style={styles.loadingContainer} className="mt-10">
+    <View style={{ flex: 1 }} className="bg-[#1a1a1a]">
+      {loading && !refreshing && (
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563EB" />
         </View>
       )}
-      {/* <View className="flex w-full">
-        <TouchableOpacity
-          // onPress={() => setOptions(true)}
-          className="px-3 py-2 rounded bg-[#3a3a3a]"
-          accessibilityLabel="Options"
-        ></TouchableOpacity>
-      </View> */}
+
       <ScrollView
-        className="px-4 bg-background flex-1"
+        className="flex-1 bg-[#1a1a1a]"
+        contentContainerStyle={{ paddingHorizontal: 16 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            // onRefresh={onRefresh}
-            colors={["#2563EB"]} // android indicator color
-            tintColor="#2563EB"  // ios indicator color
+            onRefresh={onRefresh}
+            colors={["#2563EB"]}
+            tintColor="#2563EB"
+            progressBackgroundColor="#1a1a1a"
           />
         }
       >
-        {
-          loading ? "" :
-          workspaces.map((ws) => (
-            <View key={ws.id} onClick={ok} className="" > 
-              <WorkspaceAccordion
-              id={ws.id}
-              name={ws.displayName}
-              boards={ws.idBoards}
-            />
-            </View>
-          ))
-        }
+        {loading && !refreshing ? null : workspaces.map((ws) => (
+          <WorkspaceAccordion
+            key={ws.id}
+            id={ws.id}
+            name={ws.displayName}
+            boards={ws.idBoards}
+          />
+        ))}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  indicator: {
-    position: "absolute",
-    top: 8,
-    alignSelf: "center",
-    zIndex: 9999,
-    padding: 6,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderRadius: 16,
-    elevation: 4,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.8)",
+    backgroundColor: "#1a1a1a",
     position: "absolute",
     width: "100%",
     height: "100%",
