@@ -1,18 +1,19 @@
-// components/cards/CardComments.jsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { addComment, getCardComments, deleteComment } from '../../services/trello';
+import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { addComment, deleteComment } from '../../services/trello';
 
 export default function CardComments({ cardId, initialComments = [], onCommentsChange }) {
   const { token } = useAuth();
   const [comments, setComments] = useState(initialComments);
+
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
+
   const [newComment, setNewComment] = useState('');
   const [posting, setPosting] = useState(false);
 
-  const refreshComments = (updated) => {
+  const refresh = (updated) => {
     setComments(updated);
     onCommentsChange?.(updated);
   };
@@ -20,22 +21,24 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
   // Ajouter un commentaire
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
+
     setPosting(true);
     try {
-      const commentData = await addComment(cardId, token, newComment.trim());
-      if (commentData) refreshComments([...comments, commentData]);
+      const comment = await addComment(cardId, token, newComment.trim());
+      if (comment) refresh([...comments, comment]);
       setNewComment('');
-    } catch (error) {
-      console.error('Erreur ajout commentaire:', error);
+    } catch (err) {
+      console.error("Erreur ajout commentaire:", err);
+      Alert.alert("Erreur", "Impossible d'ajouter le commentaire");
     } finally {
       setPosting(false);
     }
   };
 
-  // Commencer l'édition inline
+  // Activer edit
   const startEditing = (comment) => {
     setEditingId(comment.id);
-    setEditText(comment.data?.text || '');
+    setEditText(comment.data?.text || "");
   };
 
   const cancelEditing = () => {
@@ -43,44 +46,60 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
     setEditText('');
   };
 
-  // Sauvegarder édition
+  // Remplace saveEdit par ceci
   const saveEdit = async (comment) => {
+    if (!editText.trim()) return;
+
     try {
-      // Trello ne permet pas de modifier, on supprime et ajoute un nouveau commentaire
-      await deleteComment(cardId, comment.id, token);
-      const newC = await addComment(cardId, token, editText);
-      const updatedComments = comments.map(c => c.id === comment.id ? newC : c);
-      refreshComments(updatedComments);
+      const deleted = await deleteComment(comment.id, token);
+      if (!deleted) throw new Error("Delete failed");
+
+      const newComment = await addComment(cardId, token, editText.trim());
+      if (!newComment) throw new Error("Add failed");
+
+      const newList = comments.map(c =>
+        c.id === comment.id ? newComment : c
+      );
+      refresh(newList);
+
       cancelEditing();
-    } catch (error) {
-      console.error('Erreur modification commentaire:', error);
+    } catch (err) {
+      console.error("Erreur modification commentaire:", err);
+      Alert.alert("Erreur", "Impossible de modifier le commentaire");
     }
   };
 
-  // Supprimer un commentaire
-  const handleDeleteComment = async (commentId) => {
+
+  // Delete
+  const handleDelete = async (commentId) => {
     try {
-      const success = await deleteComment(cardId, commentId, token);
-      if (success) refreshComments(comments.filter(c => c.id !== commentId));
-    } catch (error) {
-      console.error('Erreur suppression commentaire:', error);
+      const success = await deleteComment(commentId, token);
+      if (success) refresh(comments.filter(c => c.id !== commentId));
+    } catch (err) {
+      console.error("Erreur suppression:", err);
     }
   };
 
   return (
     <View className="mt-4">
-      <Text className="text-white font-semibold mb-2">Commentaires</Text>
+      <Text className="text-white font-semibold mb-2">Comments</Text>
 
       {comments.map(comment => (
-        <View key={comment.id} className="bg-[#333333] rounded-lg p-2 mb-2">
+        <View key={comment.id} className="bg-[#333333] rounded-lg p-3 mb-3">
+
+          {/* Header: Auteur + actions */}
           <View className="flex-row justify-between items-center">
-            <Text className="text-gray-200 font-medium">{comment.memberCreator?.fullName}</Text>
-            <View className="flex-row space-x-2">
+            <Text className="text-gray-200 font-medium">
+              {comment.memberCreator?.fullName ?? "Unknown"}
+            </Text>
+
+            <View className="flex-row space-x-3">
               {editingId === comment.id ? (
                 <>
                   <TouchableOpacity onPress={() => saveEdit(comment)}>
-                    <Text className="text-blue-400 text-sm">Save</Text>
+                    <Text className="text-blue-400 text-sm mx-4">Save</Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity onPress={cancelEditing}>
                     <Text className="text-gray-400 text-sm">Cancel</Text>
                   </TouchableOpacity>
@@ -88,9 +107,10 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
               ) : (
                 <>
                   <TouchableOpacity onPress={() => startEditing(comment)}>
-                    <Text className="text-blue-400 text-sm">Edit</Text>
+                    <Text className="text-blue-400 text-sm mx-4">Edit</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDeleteComment(comment.id)}>
+
+                  <TouchableOpacity onPress={() => handleDelete(comment.id)}>
                     <Text className="text-red-400 text-sm">Delete</Text>
                   </TouchableOpacity>
                 </>
@@ -98,35 +118,42 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
             </View>
           </View>
 
+          {/* Commentaire */}
           {editingId === comment.id ? (
             <TextInput
               value={editText}
               onChangeText={setEditText}
-              className="bg-gray-600 text-white rounded px-2 py-1 mt-1"
+              multiline
+              className="bg-gray-600 text-white rounded px-2 py-1 mt-2"
             />
           ) : (
-            <Text className="text-gray-100 mt-1">{comment.data?.text}</Text>
+            <Text className="text-gray-100 mt-2">{comment.data?.text}</Text>
           )}
 
-          <Text className="text-gray-400 text-xs">{new Date(comment.date).toLocaleString()}</Text>
+          <Text className="text-gray-400 text-xs mt-1">
+            {new Date(comment.date).toLocaleString()}
+          </Text>
         </View>
       ))}
 
-      {/* Ajouter un commentaire */}
+      {/* Input ajout */}
       <View className="mt-2 flex-row items-center">
         <TextInput
           value={newComment}
           onChangeText={setNewComment}
-          placeholder="Ajouter un commentaire..."
+          placeholder="Add a comment..."
           placeholderTextColor="#888"
           className="flex-1 border border-gray-600 rounded-lg px-3 py-2 mr-2 text-white"
         />
+
         <TouchableOpacity
           onPress={handleAddComment}
-          className="bg-blue-500 px-4 py-2 rounded-lg"
           disabled={posting}
+          className="bg-blue-500 px-4 py-2 rounded-lg"
         >
-          <Text className="text-white font-semibold">{posting ? '...' : 'Envoyer'}</Text>
+          <Text className="text-white font-semibold">
+            {posting ? "..." : "Send"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

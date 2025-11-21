@@ -2,7 +2,7 @@ import * as AuthSession from 'expo-auth-session';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { TRELLO_CONFIG } from '../utils/constants';
-import { getFromApi, postWithApi, updateWithApi, deleteWithApi } from './axiosService';
+import { deleteWithApi, getFromApi, postWithApi, updateWithApi } from './axiosService';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -119,10 +119,14 @@ export async function createCard(listId, token, { name, desc = "", start = null,
 }
 
 export async function getCard(cardId, token) {
-	const endpoint = `/cards/${cardId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
-	const [success, data] = await getFromApi(endpoint);
-	return success ? data : null;
+  const endpoint = `/cards/${cardId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}&members=true&member_fields=fullName,avatarUrl`;
+  const [success, data] = await getFromApi(endpoint);
+//   console.log(data);
+  
+  return success ? data : null;
 }
+
+
 
 export async function updateCard(cardId, token, payload) {
 	const endpoint = `/cards/${cardId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
@@ -174,7 +178,14 @@ export async function getCardComments(cardId, token) {
 	const [success, data] = await getFromApi(endpoint);
 	return success ? data : [];
 }
+// UPDATE COMMENT
+export async function updateComment(cardId, commentId, token, text) {
+  const endpoint = `/cards/${cardId}/actions/${commentId}/comments?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
+  const payload = { text };
 
+  const [success, data] = await postWithApi(endpoint, payload, "put");
+  return success ? data : null;
+}
 // SUPPRESSION DE COMMENTAIRE
 export async function deleteComment(commentId, token) {
     const endpoint = `/actions/${commentId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;

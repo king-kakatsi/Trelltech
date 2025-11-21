@@ -1,27 +1,27 @@
-import { Stack, useLocalSearchParams, router } from 'expo-router';
-import { useState, useEffect } from 'react';
-import { View, ActivityIndicator, Alert, Dimensions } from 'react-native';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Dimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BoardDetailHeader from '../../../../../components/boardDetail/BoardDetailHeader';
 import BoardMembersBar from '../../../../../components/boardDetail/BoardMembersBar';
-import ListCarousel from '../../../../../components/boardDetail/ListCarousel';
-import EmptyListsState from '../../../../../components/boardDetail/EmptyListsState';
 import BoardMenuDrawer from '../../../../../components/boardDetail/BoardMenuDrawer';
-import EditBoardDrawer from '../../../../../components/boardDetail/EditBoardDrawer';
 import CreateListDrawer from '../../../../../components/boardDetail/CreateListDrawer';
-import ListMenuDrawer from '../../../../../components/boardDetail/ListMenuDrawer';
+import EditBoardDrawer from '../../../../../components/boardDetail/EditBoardDrawer';
 import EditListDrawer from '../../../../../components/boardDetail/EditListDrawer';
+import EmptyListsState from '../../../../../components/boardDetail/EmptyListsState';
+import ListCarousel from '../../../../../components/boardDetail/ListCarousel';
+import ListMenuDrawer from '../../../../../components/boardDetail/ListMenuDrawer';
 import AddMembersDrawer from '../../../../../components/ui/AddMembersDrawer';
-import { 
-  getBoardDetails, 
+import {
+  archiveBoard,
+  archiveList,
+  createList,
+  getBoardDetails,
   getBoardLists,
   getBoardMembers,
-  createList, 
-  updateList, 
-  archiveList,
-  updateBoardName,
   updateBoardDescription,
-  archiveBoard 
+  updateBoardName,
+  updateList
 } from '../../../../../services/boardService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
