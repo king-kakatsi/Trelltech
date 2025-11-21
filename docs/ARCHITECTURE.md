@@ -45,81 +45,113 @@ Complete guide to TrellTech's architecture, structure, and design patterns.
 ### Complete Directory Tree
 
 ```
-
-├── app/                           # Expo Router application
-│   ├── (auth)/                   # Auth route group
-│   │   └── login.jsx            # Login screen
+├── app                         # Expo Router application
+│   ├── (auth)                   # Auth route group
+│   │   └── login.jsx             # Login screen
 │   │
-│   ├── (tabs)/                   # Bottom tabs group
-│   │   ├── _layout.jsx          # Tabs navigator
-│   │   ├── home.jsx             # Workspaces list
-│   │   └── profile.jsx          # User profile
-│   │
-│   ├── workspace/                # Workspace routes
-│   │   └── [workspaceId]/       # Dynamic workspace
-│   │       ├── boards.jsx       # Boards list
-│   │       ├── settings.jsx     # Workspace settings
-│   │       └── board/           # Board routes
-│   │           └── [boardId]/   # Dynamic board
-│   │               ├── index.jsx # Board detail (Kanban)
-│   │               └── card/    # Card routes
-│   │                   └── [cardId].jsx # Card detail
-│   │
-│   ├── _layout.jsx               # Root layout
-│   └── index.jsx                 # Entry point
-│
-├── components/                    # Reusable UI components
-│   ├── workspace/
-│   │   ├── WorkspaceCard.jsx
-│   │   └── WorkspaceList.jsx
-│   ├── board/
-│   │   ├── BoardCard.jsx
-│   │   └── BoardList.jsx
-│   ├── kanban/
-│   │   ├── KanbanColumn.jsx
-│   │   ├── KanbanCarousel.jsx
-│   │   └── TaskCard.jsx
-│   ├── card/
-│   │   ├── CardDetail.jsx
-│   │   └── CommentItem.jsx
-│   └── ui/
-│       ├── Button.jsx
-│       ├── LoadingSpinner.jsx
-│       └── BottomSheet.jsx
-│
-├── contexts/                      # React Context
-│   ├── AuthContext.jsx           # Authentication state
-│   └── WorkspaceContext.jsx      # Workspace state (optional)
-│
-├── services/                      # Service layer
-│   ├── axiosService.js           # HTTP client wrapper
-│   ├── localStorageService.js    # AsyncStorage wrapper
-│   └── trello.js                 # Trello API integration
-│
-├── constants/                     # Configuration
-│   ├── config.js                 # API keys, URLs
-│   └── colors.js                 # Color palette
-│
-├── utils/                         # Utility functions
-│   ├── formatters.js             # Date, text formatters
-│   └── validators.js             # Form validation
-│
-├── hooks/                         # Custom React hooks
-│   ├── useAuth.js                # Authentication hook
-│   └── useTrello.js              # Trello data hook
-│
-├── assets/                        # Static assets
-│   ├── images/
-│   └── fonts/
-│
-├── docs/                          # Documentation
-│
-├── .gitignore
-├── app.json                       # Expo configuration
+│   ├── index.jsx                    # Entry point
+│   ├── _layout.jsx                # Root layout
+│   ├── onboarding.jsx
+│   ├── (tabs)                    # Bottom tabs group
+│   │   ├── home.jsx               # Workspaces list
+│   │   ├── _layout.jsx           # Tabs navigator
+│   │   └── profile.jsx           # User profile
+│   └── workspace                  # Workspace routes
+│       └── [workspaceId]            # Dynamic workspace
+│           ├── board                 # Boards list
+│           │   └── [boardId]            # Board routes
+│           │       ├── card               # Card routes
+│           │       │   └── [cardId].jsx    # Card detail
+│           │       └── index.jsx          # Board detail (Kanban)
+│           ├── boards.jsx
+│           └── settings.jsx               # Workspace settings
+├── app.json
+├── assets
+│   └── images
+│       ├── android-icon-background.png
+│       ├── android-icon-foreground.png
+│       ├── android-icon-monochrome.png
+│       ├── favicon.png
+│       ├── icon.png
+│       ├── partial-react-logo.png
+│       ├── react-logo@2x.png
+│       ├── react-logo@3x.png
+│       ├── react-logo.png
+│       └── splash-icon.png
+├── babel.config.js
+├── components                                 # Reusable UI components
+│   ├── boardDetail                            #Board
+│   │   ├── BoardDetailHeader.js
+│   │   ├── BoardMembersBar.js
+│   │   ├── BoardMenuDrawer.js
+│   │   ├── CreateListDrawer.js
+│   │   ├── EditBoardDrawer.js
+│   │   ├── EditListDrawer.js
+│   │   ├── EmptyListsState.js
+│   │   ├── ListCarousel.js
+│   │   └── ListMenuDrawer.js
+│   ├── boards                            
+│   │   ├── BoardCard.js
+│   │   ├── BoardsHeader.js
+│   │   ├── BoardsList.js
+│   │   ├── CreateBoardDrawer.js
+│   │   └── EmptyBoardsState.js
+│   ├── cards                                  #Card
+│   │   ├── CardComments.jsx
+│   │   ├── CardCreate.jsx
+│   │   ├── CardDetails.jsx
+│   │   └── CardUpdate.jsx
+│   ├── CommentItem.jsx
+│   ├── home
+│   │   ├── Board.jsx
+│   │   ├── BoardList.jsx
+│   │   ├── OptionsModal.jsx
+│   │   ├── WorkspaceAccordion.jsx
+│   │   ├── WorkspaceList.jsx
+│   │   └── WorkspaceOptions.jsx
+│   ├── Kanban.jsx
+│   ├── LoadingSpinner.jsx
+│   ├── TaskCard.jsx
+│   ├── ui
+│   │   ├── AddMembersDrawer.jsx
+│   │   └── BottomDrawer.jsx
+│   └── workspace
+│       ├── ManageWorkspaceMembers.jsx
+│       ├── NewWorkspace.jsx
+│       └── UpdateWorkspace.jsx
+├── contexts                                     # React Context
+│   └── AuthContext.jsx                          # Authentication state
+├── docs                                          # Documentation
+│   ├── ARCHITECTURE.md
+│   ├── doc_links.txt
+│   ├── INSTALLATION.md
+│   └── QUICKSTART.md
+├── LICENSE.txt
+├── metro.config.js
+├── nativewind-env.d.ts
 ├── package.json
-├── tailwind.config.js             # NativeWind config
-└── global.css                     # Global styles
-```
+├── package-lock.json
+├── README.md
+├── services                                       # Service layer
+│   ├── axiosService.js                            # HTTP client wrapper
+│   ├── boardService.js
+│   ├── card.js
+│   ├── list.js
+│   ├── localStorageService.js                     # AsyncStorage wrapper
+│   ├── memberService.js
+│   ├── trello.js                                   # Trello API integration
+│   └── workspaces.js
+├── tailwind.config.js                                # NativeWind config
+├── __tests__
+│   ├── Auth.integration.test.js
+│   └── BoardDetailScreen.integration.test.js
+├── TEST_STRATEGY.md
+├── tsconfig.json
+└── utils                                              # Utility functions
+    ├── boardTemplates.js
+    ├── constants.js                                  # Configuration
+    └── memberColors.js
+     
 
 ## Expo Router (File-Based Routing)
 
