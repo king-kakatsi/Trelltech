@@ -46,14 +46,40 @@ TrellTech transforms your mobile device into a powerful project management tool 
 
 ## Screenshots
 
+### Login page
+![login](./docs/screenshots/trelltech_login.jpeg)
+
+### User connexion to trello app
+![Authentification](./docs/screenshots/trelltech_oauth.jpeg)
+
+### User profile
+![Workspaces list](./docs/screenshots/trelltech_profile.jpeg)
+
 ### Home & Workspaces
 ![Workspaces list](./docs/screenshots/trelltech_workspaces.jpeg)
 
-### Board Kanban View
-![Kanban board](./docs/screenshots/kanban.png)
+### Management of workspace members 
+![action for Workspace members](./docs/screenshots/trelltech_board_action.jpeg)
 
-### Card Details
-![Card detail](./docs/screenshots/card_detail.png)
+### Action on workspace 
+![workspace action](./docs/screenshots/trelltech_workspace_action.jpeg)
+
+### User boards
+![Boards](./docs/screenshots/trelltech_boards.jpeg)
+
+### Board creation
+![board creation form ](./docs/screenshots/trelltech_add_board.jpeg)
+
+
+### User board detail
+![Board detail ](./docs/screenshots/trelltech_board.jpeg)
+
+
+### Management of board members 
+![action for board members](./docs/screenshots/trelltech_manage_board_members.jpeg)
+
+
+
 
 ## Quick Links
 
