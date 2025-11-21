@@ -59,6 +59,7 @@ export default function WorkspaceList({ workspaces, loading, refreshing, onRefre
           setSelectedAccordionId={setSelectedAccordionId}
           setListMenuVisible={setListMenuVisible}
           selectedWorkspace={selectedWorkspace}
+          onRefresh={onRefresh}
         />
       </BottomDrawer>
     </View>

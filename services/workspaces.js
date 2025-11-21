@@ -1,4 +1,4 @@
-import { getFromApi, postWithApi } from "./axiosService";
+import { deleteAllWithApi, getFromApi, postWithApi } from "./axiosService";
 import { fetchFromLocalStorage } from "./localStorageService";
 
 // const token = 'ATTA699410413122bd02f2e3b9be3ab68d9ca1754983909014257aebe51ba366362eD7365349';
@@ -6,20 +6,31 @@ import { fetchFromLocalStorage } from "./localStorageService";
 
 const apiKey = process.env.EXPO_PUBLIC_TRELLTECH_API_KEY;
 
-export async function getAllWorkspaces(token) {
-    const res = await getFromApi(`/members/me/organizations?key=${apiKey}&token=${token}`);
-    return res;
+export async function getAllWorkspaces() {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+        const endpoint = `/members/me/organizations?key=${apiKey}&token=${encodeURIComponent(token)}`;
+        const res = await getFromApi(endpoint);
+        return res;
+    } catch (error) {
+        console.error('Error fetching workspaces:', error);
+        throw error;
+    }
 }
 
-export async function getBoard(id,token) {
-    const res = await getFromApi(`/boards/${id}?key=${apiKey}&token=${token}`);
-    return res;
+export async function getBoard(id) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+        const endpoint = `/boards/${id}?key=${apiKey}&token=${encodeURIComponent(token)}`;
+        const res = await getFromApi(endpoint);
+        return res;
+    } catch (error) {
+        console.error('Error fetching board:', error);
+        throw error;
+    }
 }
-
-// export async function postBoard(displayName,token) {
-//     const res = await getFromApi(`/organizations?displayName=${displayName}&key=${apiKey}&token=${token}`);
-//     return res;
-// }
 
 // Create a new board
 export const postBoard = async (displayName, options = {}) => {
@@ -57,3 +68,16 @@ export const postBoard = async (displayName, options = {}) => {
         throw error;
     }
 };
+
+export async function deleteWorkspace(id) {
+    try {
+        const token = await fetchFromLocalStorage('trello_token');
+        if (!token) throw 'No token found';
+        const res = await deleteAllWithApi(`/organizations/${id}?key=${apiKey}&token=${token}`);
+        console.log("deleteWorkspace", res);
+        return res;
+    } catch (error) {
+        console.error('Error creating board:', error);
+        throw error;
+    }
+}

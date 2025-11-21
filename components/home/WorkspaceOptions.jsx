@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
+import { deleteWorkspace } from '../../services/workspaces';
 import BottomDrawer from '../ui/BottomDrawer';
 import UpdateWorkspace from '../workspace/UpdateWorkspace';
 
-const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMenuVisible, selectedWorkspace = null}) => {
+const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMenuVisible, selectedWorkspace = null, onRefresh = null}) => {
     const router = useRouter();
     const [isEditDrawerVisible, setEditDrawerVisible] = useState(false);
 
@@ -31,10 +32,29 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
           "Voulez-vous vraiment supprimer ce workspace ?",
           [
             { text: "Annuler", style: "cancel" },
-            { text: "Supprimer", style: "destructive", onPress: () => {
-                // TODO: ajouter logique de suppression (API call)
-                setListMenuVisible(false);
-                setSelectedAccordionId(null);
+            { text: "Supprimer", style: "destructive", onPress: async () => {
+                try {
+                  const id = selectedAccordionId;
+                  // appeler la fonction de suppression
+                  const [success, data] = await deleteWorkspace(id);
+                  console.log('DEBUG deleteWorkspace result:', success, data);
+
+                  if (!success) {
+                    // suppression OK : fermer menu, réinitialiser sélection et déclencher refresh si fourni
+                    Alert.alert('Supprimé', 'Workspace supprimé avec succès.');
+                    setListMenuVisible(false);
+                    // setSelectedAccordionId(null);
+                    if (typeof onRefresh === 'function') {
+                      try { onRefresh(); } catch (e) { console.error('onRefresh callback error', e); }
+                    }
+                  } else {
+                    console.error('Delete failed:', data);
+                    Alert.alert('Erreur', data?.message || 'Échec de la suppression.');
+                  }
+                } catch (error) {
+                  console.error('Error deleting workspace:', error);
+                  Alert.alert('Erreur', 'Une erreur est survenue lors de la suppression.');
+                }
               }
             },
           ]
