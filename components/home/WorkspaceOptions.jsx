@@ -39,7 +39,7 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
                   const id = selectedAccordionId;
                   // appeler la fonction de suppression
                   const [success, data] = await deleteWorkspace(id);
-                  console.log('DEBUG deleteWorkspace result:', success, data);
+                  
 
                   if (!success) {
                     // suppression OK : fermer menu, réinitialiser sélection et déclencher refresh si fourni

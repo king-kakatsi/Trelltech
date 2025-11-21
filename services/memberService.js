@@ -1,6 +1,11 @@
-import { fetchFromLocalStorage } from './localStorageService';
-import { TRELLO_CONFIG } from '../utils/constants';
-import { getFromApi, postWithApi, updateWithApi, deleteWithApi } from './axiosService';
+import { fetchFromLocalStorage } from "./localStorageService";
+import { TRELLO_CONFIG } from "../utils/constants";
+import {
+  getFromApi,
+  postWithApi,
+  updateWithApi,
+  deleteWithApi,
+} from "./axiosService";
 
 /**
  * Get available members based on instance type
@@ -10,50 +15,49 @@ import { getFromApi, postWithApi, updateWithApi, deleteWithApi } from './axiosSe
  */
 export const getAvailableMembers = async (instanceType, instanceId) => {
   try {
-    const token = await fetchFromLocalStorage('trello_token');
+    const token = await fetchFromLocalStorage("trello_token");
     if (!token) {
-      throw 'No token found';
+      throw "No token found";
     }
 
-    let endpoint = '';
-    
+    let endpoint = "";
+
     switch (instanceType) {
-      case 'workspace':
+      case "workspace":
         endpoint = `/organizations/${instanceId}/members?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
         break;
-      
-      case 'board':
+
+      case "board":
         const boardEndpoint = `/boards/${instanceId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}&fields=idOrganization`;
         const [boardSuccess, boardData] = await getFromApi(boardEndpoint);
         if (!boardSuccess || !boardData.idOrganization) {
-          throw 'Failed to get board organization';
+          throw "Failed to get board organization";
         }
         endpoint = `/organizations/${boardData.idOrganization}/members?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
         break;
-      
-      case 'card':
+
+      case "card":
         const cardEndpoint = `/cards/${instanceId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}&fields=idBoard`;
         const [cardSuccess, cardData] = await getFromApi(cardEndpoint);
         if (!cardSuccess || !cardData.idBoard) {
-          throw 'Failed to get card board';
+          throw "Failed to get card board";
         }
         endpoint = `/boards/${cardData.idBoard}/members?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
         break;
-      
+
       default:
-        throw 'Invalid instance type';
+        throw "Invalid instance type";
     }
 
-    console.log('DEBUG getAvailableMembers endpoint:', endpoint);
     const [success, data] = await getFromApi(endpoint);
-    
+
     if (!success) {
       throw data;
     }
-    
+
     return data;
   } catch (error) {
-    console.error('Error fetching available members:', error);
+    console.error("Error fetching available members:", error);
     throw error;
   }
 };
@@ -66,40 +70,39 @@ export const getAvailableMembers = async (instanceType, instanceId) => {
  */
 export const getCurrentMembers = async (instanceType, instanceId) => {
   try {
-    const token = await fetchFromLocalStorage('trello_token');
+    const token = await fetchFromLocalStorage("trello_token");
     if (!token) {
-      throw 'No token found';
+      throw "No token found";
     }
 
-    let endpoint = '';
-    
+    let endpoint = "";
+
     switch (instanceType) {
-      case 'workspace':
+      case "workspace":
         endpoint = `/organizations/${instanceId}/members?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
         break;
-      
-      case 'board':
+
+      case "board":
         endpoint = `/boards/${instanceId}/members?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
         break;
-      
-      case 'card':
+
+      case "card":
         endpoint = `/cards/${instanceId}/members?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
         break;
-      
+
       default:
-        throw 'Invalid instance type';
+        throw "Invalid instance type";
     }
 
-    console.log('DEBUG getCurrentMembers endpoint:', endpoint);
     const [success, data] = await getFromApi(endpoint);
-    
+
     if (!success) {
       throw data;
     }
-    
+
     return data;
   } catch (error) {
-    console.error('Error fetching current members:', error);
+    console.error("Error fetching current members:", error);
     throw error;
   }
 };
@@ -113,47 +116,55 @@ export const getCurrentMembers = async (instanceType, instanceId) => {
  */
 export const addMember = async (instanceType, instanceId, memberId) => {
   try {
-    const token = await fetchFromLocalStorage('trello_token');
+    const token = await fetchFromLocalStorage("trello_token");
     if (!token) {
-      throw 'No token found';
+      throw "No token found";
     }
 
-    let endpoint = '';
+    let endpoint = "";
     let success, data;
-    
+
     switch (instanceType) {
-      case 'workspace':
+      case "workspace":
         // Workspace uses PUT request
         endpoint = `/organizations/${instanceId}/members/${memberId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}&type=normal`;
-        console.log('DEBUG addMember (workspace) endpoint:', endpoint);
-        [success, data] = await updateWithApi(endpoint, {}, { autoJoin: false });
+
+        [success, data] = await updateWithApi(
+          endpoint,
+          {},
+          { autoJoin: false }
+        );
         break;
-      
-      case 'board':
+
+      case "board":
         // Board uses PUT request
         endpoint = `/boards/${instanceId}/members/${memberId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}&type=normal`;
-        console.log('DEBUG addMember (board) endpoint:', endpoint);
-        [success, data] = await updateWithApi(endpoint, {}, { autoJoin: false });
+
+        [success, data] = await updateWithApi(
+          endpoint,
+          {},
+          { autoJoin: false }
+        );
         break;
+
+      case "card":
       
-      case 'card':
-        // Card uses POST request with value in body
         endpoint = `/cards/${instanceId}/idMembers?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
-        console.log('DEBUG addMember (card) endpoint:', endpoint);
+
         [success, data] = await postWithApi(endpoint, { value: memberId });
         break;
-      
+
       default:
-        throw 'Invalid instance type';
+        throw "Invalid instance type";
     }
-    
+
     if (!success) {
       throw data;
     }
-    
+
     return true;
   } catch (error) {
-    console.error('Error adding member:', error);
+    console.error("Error adding member:", error);
     throw error;
   }
 };
@@ -167,40 +178,39 @@ export const addMember = async (instanceType, instanceId, memberId) => {
  */
 export const removeMember = async (instanceType, instanceId, memberId) => {
   try {
-    const token = await fetchFromLocalStorage('trello_token');
+    const token = await fetchFromLocalStorage("trello_token");
     if (!token) {
-      throw 'No token found';
+      throw "No token found";
     }
 
-    let endpoint = '';
-    
+    let endpoint = "";
+
     switch (instanceType) {
-      case 'workspace':
+      case "workspace":
         endpoint = `/organizations/${instanceId}/members/${memberId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
         break;
-      
-      case 'board':
+
+      case "board":
         endpoint = `/boards/${instanceId}/members/${memberId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
         break;
-      
-      case 'card':
+
+      case "card":
         endpoint = `/cards/${instanceId}/idMembers/${memberId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
         break;
-      
+
       default:
-        throw 'Invalid instance type';
+        throw "Invalid instance type";
     }
 
-    console.log('DEBUG removeMember endpoint:', endpoint);
     const [success, data] = await deleteWithApi(endpoint, { autoJoin: false });
-    
+
     if (!success) {
       throw data;
     }
-    
+
     return true;
   } catch (error) {
-    console.error('Error removing member:', error);
+    console.error("Error removing member:", error);
     throw error;
   }
 };

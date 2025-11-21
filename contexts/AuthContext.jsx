@@ -15,36 +15,33 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     const savedToken = await fetchFromLocalStorage('trello_token');
-    
+
     if (savedToken) {
       setToken(savedToken);
-      
+
       try {
         const userData = await trelloService.getCurrentUser(savedToken);
         setUser(userData);
       } catch (error) {
-        console.log('Failed to get user, clearing token');
         await removeFromLocalStorage('trello_token');
         setToken(null);
       }
     }
-    
+
     setIsLoading(false);
   };
 
   const login = async () => {
     try {
       const newToken = await trelloService.authenticate();
-      console.log("\n\n\nDEBUG", newToken); // TODO: remove
       await saveInLocalStorage('trello_token', newToken);
       setToken(newToken);
-      
+
       const userData = await trelloService.getCurrentUser(newToken);
       setUser(userData);
-      
+
       return true;
     } catch (error) {
-      console.log('Login error:', error);
       return false;
     }
   };
@@ -56,13 +53,13 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        token, 
-        isAuthenticated: !!token, 
-        isLoading, 
-        login, 
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated: !!token,
+        isLoading,
+        login,
         logout,
         refetchUser: checkAuth,
       }}

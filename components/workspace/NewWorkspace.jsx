@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { postWorkspace } from '../../services/workspaces';
 
-const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
-  const [newWorkspace,setNewWorkspace] = useState({
+const NewWorkspace = ({ open, onCreate = () => { }, onClose = () => { } }) => {
+  const [newWorkspace, setNewWorkspace] = useState({
     displayName: '',
     description: '',
     name: '',
@@ -45,7 +45,7 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
           throw new Error('Le lien doit utiliser http ou https');
         }
       } catch (e) {
-        Alert.alert('Erreur', 'Le champ Website doit contenir une URL valide (ex: https://example.com)');
+        Alert.alert('Erreur', 'Le champ Website doit contenir une URL valide');
         return;
       }
     }
@@ -59,8 +59,8 @@ const NewWorkspace = ({open, onCreate = () => {}, onClose = () => {} }) => {
         website: websiteTrim
       };
       const res = await postWorkspace(newWorkspace.displayName.trim(), options);
-      console.log("res postBoard",res);
-      
+
+
       setNewWorkspace({
         displayName: '',
         description: '',

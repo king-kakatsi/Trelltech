@@ -24,20 +24,17 @@ export async function authenticate() {
 		`key=${TRELLO_CONFIG.API_KEY}&` +
 		`return_url=${encodedRedirect}`;
 
-	console.log('Opening auth URL:', authUrl);
+	
 
 	const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
 
-	console.log('WebBrowser result type:', result.type);
-	console.log('WebBrowser result URL:', result.url);
+	
 
 	if (result.type === 'success' && result.url) {
 		const url = result.url;
 		// Chercher token dans le fragment (#token=...) ou dans les query params (?token=... ou &token=...)
 		let tokenMatch = url.match(/#.*?token=([^&]+)/) || url.match(/[?&]token=([^&]+)/) || url.match(/token=([^&]+)/);
-		console.log('token match:', tokenMatch);
 		if (tokenMatch) {
-			console.log('token (truncated):', tokenMatch[1].substring(0, 10) + '...');
 			return tokenMatch[1];
 		}
 		console.error('Token non trouvé dans l\'URL de redirection:', url);
@@ -45,11 +42,9 @@ export async function authenticate() {
 	}
 
 	if (result.type === 'cancel' || result.type === 'dismiss') {
-		console.log('User cancelled or dismissed authentication:', result.type);
 		throw new Error('Authentication cancelled');
 	}
 
-	console.error('Authentication failed or unexpected result:', result);
 	throw new Error('Authentication failed');
 }
 
@@ -77,7 +72,6 @@ export async function updateCurrentUser(token, updates) {
     { autoJoin: false }
   );
   if (success) return data; 
-  console.log('Update failed:', data);
   throw new Error('Failed to update user');
 }
 
@@ -105,7 +99,7 @@ export async function getCards(listId, token) {
 	return success ? data : [];
 }
 
-// Waren Start 
+
 
 //    CARD CRUD
 
@@ -121,7 +115,7 @@ export async function createCard(listId, token, { name, desc = "", start = null,
 export async function getCard(cardId, token) {
   const endpoint = `/cards/${cardId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}&members=true&member_fields=fullName,avatarUrl`;
   const [success, data] = await getFromApi(endpoint);
-//   console.log(data);
+
   
   return success ? data : null;
 }
@@ -214,4 +208,4 @@ export async function updateCardDates(cardId, token, start, due) {
 	return await updateCard(cardId, token, { start, due });
 }
 
-// Waren End 
+

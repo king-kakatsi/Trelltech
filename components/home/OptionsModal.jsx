@@ -10,34 +10,18 @@ const OptionsModal = ({options, setOptions, refreshWorkspaces}) => {
   }
     // Handlers pour les actions du volet d'options
   const handleAdd = () => {
-    console.log('Ajouter action');
     toShowNewWorkspace()
     // setOptions(false);
   };
 
-  // const handleEdit = () => {
-  //   console.log('Modifier action');
-  //   setOptions(false);
-  // };
-
-  // const handleDelete = () => {
-  //   console.log('Supprimer action');
-  //   setOptions(false);
-  // };
+  
 
   const fetchAgain = () => {
     // alert('Fetch again' );
     refreshWorkspaces();
   }
     return (
-      //   <Modal
-      //   // visible={options}
-      //   transparent
-      //   animationType="slide"
-      //   onRequestClose={() => setOptions(false)}
-      // >
-        
-      // </Modal>
+      
       <>
       <View className='w-full h-full'>
       <Pressable
@@ -52,18 +36,7 @@ const OptionsModal = ({options, setOptions, refreshWorkspaces}) => {
             >
               <Text className="text-center text-white">Add New Workspace</Text>
             </TouchableOpacity>
-            {/* <TouchableOpacity
-              onPress={handleEdit}
-              className="w-full py-3 mb-2 bg-[#f59e0b] rounded"
-            >
-              <Text className="text-center text-white">Modifier</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleDelete}
-              className="w-full py-3 bg-[#ef4444] rounded"
-            >
-              <Text className="text-center text-white">Supprimer</Text>
-            </TouchableOpacity> */}
+            
           </View>
         </Pressable>
         <NewWorkspace onCreate={fetchAgain} onClose={toShowNewWorkspace} open={showNewWorkspace} />

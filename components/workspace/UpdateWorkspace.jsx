@@ -3,7 +3,7 @@ import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Te
 import { updateWorkspace } from '../../services/workspaces';
 
 const UpdateWorkspace = ({ open, workspace = null, onUpdate = () => {}, onClose = () => {} }) => {
-  // Harmonisé avec NewWorkspace: état unique pour les champs
+  
   const [workspaceData, setWorkspaceData] = useState({
     displayName: '',
     name: '',
@@ -77,7 +77,7 @@ const UpdateWorkspace = ({ open, workspace = null, onUpdate = () => {}, onClose 
         }
       }
 
-      // construire le payload similaire à la création (desc au lieu de description)
+      // construire le payload similaire à la création
       const payload = {
         displayName: workspaceData.displayName.trim(),
         name: workspaceData.name.trim().toLowerCase(),
@@ -86,8 +86,7 @@ const UpdateWorkspace = ({ open, workspace = null, onUpdate = () => {}, onClose 
       if (websiteTrim) payload.website = websiteTrim;
 
       const res = await updateWorkspace(workspace.id, payload);
-      console.log('UpdateWorkspace result:', res);
-
+     
       setWorkspaceData({
         displayName: '',
         name: '',
