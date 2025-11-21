@@ -7,6 +7,7 @@ export default function BoardMenuDrawer({
   visible,
   onClose,
   onEditBoard,
+  onManageMembers,
   onArchiveBoard
 }) {
   return (
@@ -21,6 +22,14 @@ export default function BoardMenuDrawer({
       >
         <Ionicons name="create-outline" size={24} color="#fff" />
         <Text className="text-white text-base ml-3">Edit Board Details</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={onManageMembers}
+        className="flex-row items-center py-4 border-b border-gray-700"
+      >
+        <Ionicons name="people-outline" size={24} color="#fff" />
+        <Text className="text-white text-base ml-3">Manage Members</Text>
       </Pressable>
 
       <Pressable
