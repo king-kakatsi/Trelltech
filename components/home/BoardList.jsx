@@ -13,7 +13,7 @@ const BoardList = ({ boards = [] }) => {
             >
               {/* <Table size={18} color="#6B778C" /> */}
               {/* <Text className=" text-sm">{b}</Text> */}
-              <Board id={b}  />
+              <Board id={b} workspaceId={b.organizationId}  />
             </TouchableOpacity>
           ))}
         </View>
