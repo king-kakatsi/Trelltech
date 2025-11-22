@@ -81,15 +81,37 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
   };
 
   return (
-    <View className="mt-4">
+    <View className="mt-4 mb-[300px]">
       <Text className="text-white font-semibold mb-2">Comments</Text>
 
+      {/* Input field at the top */}
+      <View className="mb-4 flex-row items-center">
+        <TextInput
+          value={newComment}
+          onChangeText={setNewComment}
+          placeholder="Add a comment..."
+          placeholderTextColor="#888"
+          className="flex-1 border border-gray-600 rounded-lg px-3 py-2 mr-2 text-white"
+        />
+
+        <TouchableOpacity
+          onPress={handleAddComment}
+          disabled={posting}
+          className="bg-blue-500 px-4 py-2 rounded-lg"
+        >
+          <Text className="text-white font-semibold">
+            {posting ? "..." : "Send"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Comments list */}
       {comments.map(comment => (
         <View key={comment.id} className="bg-[#333333] rounded-lg p-3 mb-3">
 
           {/* Header: Auteur + actions */}
           <View className="flex-row justify-between items-center">
-            <Text className="text-gray-200 font-medium">
+            <Text className="text-gray-400 text-sm font-medium">
               {comment.memberCreator?.fullName ?? "Unknown"}
             </Text>
 
@@ -135,27 +157,6 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
           </Text>
         </View>
       ))}
-
-      {/* Input ajout */}
-      <View className="mt-2 flex-row items-center">
-        <TextInput
-          value={newComment}
-          onChangeText={setNewComment}
-          placeholder="Add a comment..."
-          placeholderTextColor="#888"
-          className="flex-1 border border-gray-600 rounded-lg px-3 py-2 mr-2 text-white"
-        />
-
-        <TouchableOpacity
-          onPress={handleAddComment}
-          disabled={posting}
-          className="bg-blue-500 px-4 py-2 rounded-lg"
-        >
-          <Text className="text-white font-semibold">
-            {posting ? "..." : "Send"}
-          </Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }

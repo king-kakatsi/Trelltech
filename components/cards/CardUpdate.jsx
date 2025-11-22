@@ -1,202 +1,136 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { getCard, getCardComments, updateCard, updateCardDates } from '../../services/trello';
+import React, { useState } from 'react';
+import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import AddMembersDrawer from '../ui/AddMembersDrawer';
-import CardComments from './CardComments';
+import BottomDrawer from '../ui/BottomDrawer';
 
-export default function CardUpdate({ cardId, onSuccess }) {
-  const { token } = useAuth();
-  const [card, setCard] = useState(null);
-  const [comments, setComments] = useState([]);
-  const [editingTitle, setEditingTitle] = useState(false);
-  const [editingDesc, setEditingDesc] = useState(false);
-  const [title, setTitle] = useState('');
-  const [desc, setDesc] = useState('');
-  const [dueDate, setDueDate] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
-
-  //  NEW
+/**
+ * CardUpdate Component
+ * A controlled form component for editing card details
+ * Follows the same pattern as EditBoardDrawer and EditListDrawer
+ * 
+ */
+export default function CardUpdate({
+  visible,
+  cardName,
+  cardDescription,
+  cardDueDate,
+  onCardNameChange,
+  onCardDescriptionChange,
+  onCardDueDateChange,
+  onClose,
+  onSave,
+  cardId,
+  onMembersUpdated
+}) {
   const [showMembersDrawer, setShowMembersDrawer] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!cardId || !token) return;
-    fetchCard();
-  }, [cardId, token]);
-
-  const fetchCard = async () => {
-    setLoading(true);
-    try {
-      const data = await getCard(cardId, token);
-      setCard(data);
-      setTitle(data.name);
-      setDesc(data.desc);
-      setDueDate(data.due ? new Date(data.due) : null);
-
-      const cardComments = await getCardComments(cardId, token);
-      setComments(cardComments);
-    } catch (err) {
-      console.error('Error fetching card:', err);
-      Alert.alert('Error', 'Failed to load card');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveChanges = async () => {
-    if (!title.trim()) {
-      Alert.alert('Error', 'Title cannot be empty');
+  /**
+   * Handle save button press
+   * Validates input and calls onSave callback
+   */
+  const handleSave = async () => {
+    if (!cardName.trim()) {
+      Alert.alert('Error', 'Card name cannot be empty');
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
     try {
-      await updateCard(cardId, token, { name: title, desc });
-      if (dueDate) {
-        await updateCardDates(cardId, token, null, dueDate.toISOString());
-      }
-      await fetchCard();
-      onSuccess?.(card);
-      setEditingTitle(false);
-      setEditingDesc(false);
-    } catch (err) {
-      console.error('Error updating card:', err);
-      Alert.alert('Error', 'Failed to update card');
+      await onSave();
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  if (!card) {
-    return (
-      <View className="flex-1 items-center justify-center">
-        <ActivityIndicator size="large" color="#0079BF" />
-      </View>
-    );
-  }
-
   return (
-    <View className="bg-[#1a1a1a] p-4 rounded-lg shadow flex-1">
-
-      {loading && (
-        <View className="absolute inset-0 bg-black/50 justify-center items-center z-50">
-          <ActivityIndicator size="large" color="#0079BF" />
-        </View>
-      )}
-
-      {/* TITLE */}
-      <View className="mb-3">
-        {editingTitle ? (
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            className="bg-[#2a2a2a] text-white px-3 py-2 rounded"
-          />
-        ) : (
-          <TouchableOpacity onPress={() => setEditingTitle(true)}>
-            <Text className="text-white text-xl font-bold">{card.name}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* DESCRIPTION */}
-      <View className="mb-3">
-        {editingDesc ? (
-          <TextInput
-            value={desc}
-            onChangeText={setDesc}
-            multiline
-            className="bg-[#2a2a2a] text-white px-3 py-2 rounded"
-          />
-        ) : (
-          <TouchableOpacity onPress={() => setEditingDesc(true)}>
-            <Text className="text-gray-200">{card.desc || 'No description'}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* DUE DATE */}
-      <View className="mb-4">
-        <Text className="text-gray-300 mb-1">Due Date</Text>
-
-        {Platform.OS === 'web' ? (
-          <TextInput
-            type="datetime-local"
-            value={dueDate ? new Date(dueDate.getTime() - dueDate.getTimezoneOffset() * 60000)
-              .toISOString()
-              .slice(0, 16) : ''}
-            onChangeText={(text) => {
-              const d = new Date(text);
-              if (!isNaN(d)) setDueDate(d);
-            }}
-            className="bg-[#2a2a2a] text-white px-3 py-2 rounded"
-          />
-        ) : (
-          <>
-            <TouchableOpacity
-              onPress={() => setShowPicker(true)}
-              className="bg-[#2a2a2a] px-3 py-2 rounded"
-            >
-              <Text className="text-white">
-                {dueDate ? dueDate.toLocaleString() : 'Set a due date'}
-              </Text>
-            </TouchableOpacity>
-
-            {showPicker && (
-              <DateTimePicker
-                value={dueDate || new Date()}
-                mode="datetime"
-                display="default"
-                onChange={(event, selectedDate) => {
-                  setShowPicker(false);
-                  if (selectedDate) setDueDate(selectedDate);
-                }}
-              />
-            )}
-          </>
-        )}
-      </View>
-
-      {/* BUTTON TO OPEN DRAWER */}
-      <View className="mb-4">
-        <TouchableOpacity
-          onPress={() => setShowMembersDrawer(true)}
-          className="bg-[#2a2a2a] px-3 py-2 rounded"
-        >
-          <Text className="text-white font-semibold">
-            Manage Members
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* SAVE BUTTON */}
-      <TouchableOpacity
-        onPress={saveChanges}
-        className={`bg-blue-500 py-2 rounded mb-4 ${loading ? 'opacity-50' : ''}`}
-        disabled={loading}
-      >
-        <Text className="text-white font-semibold text-center">
-          {loading ? 'Saving...' : 'Save Changes'}
+    <>
+      <BottomDrawer visible={visible} onClose={onClose}>
+        <Text className="text-2xl font-bold text-white mb-6">
+          Edit Card Details
         </Text>
-      </TouchableOpacity>
 
-      {/* COMMENTS */}
-      <CardComments
-        cardId={cardId}
-        initialComments={comments}
-        onCommentsChange={fetchCard}
-      />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Card Name */}
+          <View className="mb-4">
+            <Text className="text-sm font-semibold text-gray-400 mb-2">
+              Card Name
+            </Text>
+            <TextInput
+              value={cardName}
+              onChangeText={onCardNameChange}
+              placeholder="Card name"
+              placeholderTextColor="#6B778C"
+              className="bg-[#1a1a1a] text-white px-4 py-3 rounded-xl text-base"
+              autoFocus
+            />
+          </View>
 
-      {/* MEMBERS DRAWER */}
+          {/* Card Description */}
+          <View className="mb-4">
+            <Text className="text-sm font-semibold text-gray-400 mb-2">
+              Description
+            </Text>
+            <TextInput
+              value={cardDescription}
+              onChangeText={onCardDescriptionChange}
+              placeholder="Add card description"
+              placeholderTextColor="#6B778C"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              className="bg-[#1a1a1a] text-white px-4 py-3 rounded-xl text-base min-h-[100px]"
+            />
+          </View>
+
+          {/* Due Date - Display Only */}
+          {cardDueDate && (
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-gray-400 mb-2">
+                Due Date
+              </Text>
+              <Text className="text-white text-base">
+                {cardDueDate.toLocaleString()}
+              </Text>
+              <Text className="text-gray-500 text-xs mt-1">
+                Change date from card detail view
+              </Text>
+            </View>
+          )}
+
+          {/* Action Buttons */}
+          <View className="flex-row gap-3 mb-4">
+            <Pressable
+              onPress={onClose}
+              disabled={saving}
+              className="flex-1 bg-[#1a1a1a] py-4 rounded-xl"
+            >
+              <Text className="text-white text-center font-semibold text-base">
+                Cancel
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleSave}
+              disabled={saving}
+              className="flex-1 bg-white py-4 rounded-xl"
+            >
+              <Text className="text-gray-900 text-center font-semibold text-base">
+                {saving ? 'Saving...' : 'Save'}
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </BottomDrawer>
+
+      {/* Members Management Drawer */}
       <AddMembersDrawer
         visible={showMembersDrawer}
         onClose={() => setShowMembersDrawer(false)}
         instanceType="card"
         instanceId={cardId}
-        onMembersUpdated={fetchCard}
+        onMembersUpdated={onMembersUpdated}
       />
-    </View>
+    </>
   );
 }

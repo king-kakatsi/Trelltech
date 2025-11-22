@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -129,7 +130,7 @@ export default function WorkspaceAccordion({ id, name, boards = [], onOpen }) {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
                   <View className="flex-row items-center">
                     {members.slice(0, 8).map((m, index) => {
-                      const initials = (m.initials || (m.fullName ? m.fullName.split(' ').map(s => s[0]).join('').slice(0,2) : '?')).toUpperCase();
+                      const initials = (m.initials || (m.fullName ? m.fullName.split(' ').map(s => s[0]).join('').slice(0, 2) : '?')).toUpperCase();
                       return (
                         <View key={m.id || m.username} className="mr-2 items-center">
                           <View
@@ -159,6 +160,14 @@ export default function WorkspaceAccordion({ id, name, boards = [], onOpen }) {
             <View className="py-6 items-center">
               <Ionicons name="folder-open-outline" size={28} color="#6b7280" />
               <Text className="text-neutral-400 mt-2">No boards in this workspace</Text>
+              <Link
+              href={`workspace/${id}/boards`}
+                className="bg-white mt-3 px-6 py-3 rounded-xl"
+              >
+                <Text className="text-gray-900 font-semibold">
+                  Access to the workspace
+                </Text>
+              </Link>
             </View>
           ) : (
             <BoardList boards={boards} />
