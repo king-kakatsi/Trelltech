@@ -177,7 +177,7 @@ export async function updateComment(cardId, commentId, token, text) {
   const endpoint = `/cards/${cardId}/actions/${commentId}/comments?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
   const payload = { text };
 
-  const [success, data] = await postWithApi(endpoint, payload, "put");
+  const [success, data] = await updateWithApi(endpoint, payload, { autoJoin: false });
   return success ? data : null;
 }
 // SUPPRESSION DE COMMENTAIRE

@@ -108,9 +108,10 @@ async function getExistingBranchComment(cardId) {
     const comments = await getCardComments(cardId, token);
     
     // Find comment that starts with "Branch:" or "🌿 Branch:"
+    // Trello API returns comments as actions, text is in action.data.text
     const branchComment = comments.find(comment => {
-      const text = comment.data?.text || '';
-      return text.includes('Branch:') || text.includes('branch:');
+      const text = comment.data?.text || comment.text || '';
+      return text.includes('Branch:') || text.includes('branch:') || text.includes('🌿');
     });
 
     return branchComment || null;
@@ -135,9 +136,15 @@ async function updateBranchComment(cardId, commentId, branchName) {
     const commentText = `Branch: \`${branchName}\``;
     const result = await updateComment(cardId, commentId, token, commentText);
     
-    return result !== null;
+    if (result === null) {
+      console.error(`Update returned null for card ${cardId}, comment ${commentId}`);
+      return false;
+    }
+    
+    return true;
   } catch (error) {
-    console.error(`Error updating comment for card ${cardId}:`, error);
+    console.error(`Error updating comment for card ${cardId}, comment ${commentId}:`, error);
+    console.error(`Error details:`, error.message || error);
     return false;
   }
 }
@@ -189,7 +196,8 @@ export async function addBranchCommentsToBoard(boardId, skipWeek1 = false, updat
           
           if (existingComment) {
             // Update existing comment to remove emoji if needed
-            if (updateExisting && existingComment.data?.text?.includes('🌿')) {
+            const commentText = existingComment.data?.text || existingComment.text || '';
+            if (updateExisting && (commentText.includes('🌿') || commentText.includes('Branch:'))) {
               const success = await updateBranchComment(card.id, existingComment.id, branchName);
               if (success) {
                 console.log(`  ↻ Updated branch comment: ${card.name} → ${branchName}`);
@@ -278,16 +286,19 @@ export async function removeEmojisFromComments(boardId) {
           // Check if card has a branch comment with emoji
           const existingComment = await getExistingBranchComment(card.id);
           
-          if (existingComment && existingComment.data?.text?.includes('🌿')) {
-            const branchName = generateBranchName(card.name);
-            const success = await updateBranchComment(card.id, existingComment.id, branchName);
-            
-            if (success) {
-              console.log(`  ↻ Removed emoji from: ${card.name}`);
-              updatedCards++;
-            } else {
-              console.log(`  ✗ Failed to update: ${card.name}`);
-              errors.push(card.name);
+          if (existingComment) {
+            const commentText = existingComment.data?.text || existingComment.text || '';
+            if (commentText.includes('🌿') || (commentText.includes('Branch:') && commentText !== `Branch: \`${generateBranchName(card.name)}\``)) {
+              const branchName = generateBranchName(card.name);
+              const success = await updateBranchComment(card.id, existingComment.id, branchName);
+              
+              if (success) {
+                console.log(`  ↻ Removed emoji from: ${card.name}`);
+                updatedCards++;
+              } else {
+                console.log(`  ✗ Failed to update: ${card.name} (Comment ID: ${existingComment.id})`);
+                errors.push(card.name);
+              }
             }
           }
 
