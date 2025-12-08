@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { addBranchCommentsToBoard } from '../utils/addBranchComments';
+import { addBranchCommentsToBoard, removeEmojisFromComments } from '../utils/addBranchComments';
 import { addResourceCards } from '../utils/addResourceCards';
 import { getWorkspaceBoards } from '../services/boardService';
 import { getAllWorkspaces } from '../services/workspaces';
@@ -29,7 +29,7 @@ export default function AddBranchCommentsScreen() {
     setResult(null);
 
     try {
-      const result = await addBranchCommentsToBoard(boardId, true); // Skip Week 1 cards
+      const result = await addBranchCommentsToBoard(boardId, false, true); // Don't skip Week 1, update existing
       setResult(result);
 
       if (result.success) {
@@ -165,7 +165,7 @@ export default function AddBranchCommentsScreen() {
         <TouchableOpacity
           onPress={handleAddResourceCards}
           disabled={loading || !boardId}
-          className={`bg-purple-600 rounded-lg p-4 items-center ${
+          className={`bg-purple-600 rounded-lg p-4 items-center mb-3 ${
             loading || !boardId ? 'opacity-50' : ''
           }`}
         >
@@ -180,6 +180,46 @@ export default function AddBranchCommentsScreen() {
             </Text>
           )}
         </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={async () => {
+            if (!boardId) {
+              Alert.alert('Error', 'Board ID is required.');
+              return;
+            }
+            setLoading(true);
+            setResult(null);
+            try {
+              const result = await removeEmojisFromComments(boardId);
+              setResult(result);
+              if (result.success) {
+                Alert.alert('Success', `Removed emojis from ${result.updatedCards} comments!`);
+              } else {
+                Alert.alert('Error', result.error || 'Failed');
+              }
+            } catch (error) {
+              Alert.alert('Error', error.message);
+              setResult({ success: false, error: error.message });
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading || !boardId}
+          className={`bg-orange-600 rounded-lg p-4 items-center ${
+            loading || !boardId ? 'opacity-50' : ''
+          }`}
+        >
+          {loading ? (
+            <View className="flex-row items-center">
+              <ActivityIndicator color="white" className="mr-2" />
+              <Text className="text-white font-semibold">Processing...</Text>
+            </View>
+          ) : (
+            <Text className="text-white font-semibold text-lg">
+              Remove Emojis from Comments
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       {result && (
@@ -190,7 +230,12 @@ export default function AddBranchCommentsScreen() {
               <Text className="text-green-400 mb-2">✓ Success!</Text>
               {result.commentedCards !== undefined && (
                 <Text className="text-gray-300 text-sm">
-                  Commented: {result.commentedCards} cards
+                  New comments: {result.commentedCards} cards
+                </Text>
+              )}
+              {result.updatedCards !== undefined && (
+                <Text className="text-gray-300 text-sm">
+                  Updated comments: {result.updatedCards} cards
                 </Text>
               )}
               {result.skippedCards !== undefined && (
