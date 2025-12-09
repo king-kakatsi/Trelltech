@@ -11,7 +11,7 @@
  */
 
 import { createBoard, createList, getBoardLists, getWorkspaceBoards } from '../services/boardService';
-import { createCard } from '../services/card';
+import { createCard, getCardsInList } from '../services/card';
 import { addMember } from '../services/memberService';
 import { getAllWorkspaces, postWorkspace, getWorkspaceMembers } from '../services/workspaces';
 import { TRELLO_CONFIG } from './constants';
@@ -107,6 +107,89 @@ async function addChecklistItem(checklistId, name, checked = false) {
   } catch (error) {
     console.error(`Error adding checklist item:`, error);
     throw error;
+  }
+}
+
+/**
+ * Get checklists for a card
+ * @param {string} cardId - Card ID
+ * @returns {Promise<Array>} List of checklists
+ */
+async function getCardChecklists(cardId) {
+  try {
+    const token = await fetchFromLocalStorage('trello_token');
+    if (!token) throw new Error('No token found');
+
+    const endpoint = `/cards/${cardId}/checklists?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
+    const [success, data] = await getFromApi(endpoint);
+
+    if (!success) throw data;
+    return data || [];
+  } catch (error) {
+    console.error(`Error getting checklists:`, error);
+    return [];
+  }
+}
+
+/**
+ * Get checklist items
+ * @param {string} checklistId - Checklist ID
+ * @returns {Promise<Array>} List of checklist items
+ */
+async function getChecklistItems(checklistId) {
+  try {
+    const token = await fetchFromLocalStorage('trello_token');
+    if (!token) throw new Error('No token found');
+
+    const endpoint = `/checklists/${checklistId}/checkItems?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
+    const [success, data] = await getFromApi(endpoint);
+
+    if (!success) throw data;
+    return data || [];
+  } catch (error) {
+    console.error(`Error getting checklist items:`, error);
+    return [];
+  }
+}
+
+/**
+ * Update card description
+ * @param {string} cardId - Card ID
+ * @param {string} description - New description
+ * @returns {Promise<boolean>} Success status
+ */
+async function updateCardDescription(cardId, description) {
+  try {
+    const token = await fetchFromLocalStorage('trello_token');
+    if (!token) throw new Error('No token found');
+
+    const endpoint = `/cards/${cardId}?key=${TRELLO_CONFIG.API_KEY}&token=${token}&desc=${encodeURIComponent(description)}`;
+    const [success, data] = await updateWithApi(endpoint, {}, { autoJoin: false });
+
+    if (!success) throw data;
+    return true;
+  } catch (error) {
+    console.error(`Error updating card description:`, error);
+    return false;
+  }
+}
+
+/**
+ * Find existing card by name in a list
+ * @param {string} listId - List ID
+ * @param {string} cardName - Card name to search for
+ * @returns {Promise<object|null>} Existing card or null
+ */
+async function findExistingCard(listId, cardName) {
+  try {
+    const cards = await getCardsInList(listId);
+    const existingCard = cards.find(card => 
+      card.name.trim().toLowerCase() === cardName.trim().toLowerCase()
+    );
+    return existingCard || null;
+  } catch (error) {
+    console.error(`Error finding existing card:`, error);
+    return null;
   }
 }
 
@@ -230,16 +313,15 @@ function parseMarkdownContent(content) {
       // Parse labels
       if (line.startsWith('**Labels:**')) {
         const labelsText = line.replace('**Labels:**', '').trim();
-        const labelMatches = labelsText.match(/([🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡])\s+([^\s,]+)/g);
-        if (labelMatches) {
-          currentCard.labels = labelMatches.map(match => {
-            const parts = match.trim().split(/\s+/);
-            return {
-              emoji: parts[0],
-              name: parts.slice(1).join(' ')
-            };
-          });
-        }
+        // Split by comma and clean up
+        const labelNames = labelsText.split(',').map(l => l.trim()).filter(l => l);
+        currentCard.labels = labelNames.map(name => {
+          // Remove emoji if present (for backward compatibility)
+          const cleanName = name.replace(/^[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+/, '').trim();
+          return {
+            name: cleanName
+          };
+        });
         currentSection = 'card';
       }
 
@@ -465,16 +547,16 @@ async function findOrCreateLabels(boardId, labels) {
     for (const label of labels) {
       if (!labelMap.has(label.name)) {
         try {
-          const color = getLabelColor(label.emoji);
+          const color = getLabelColor(label.name);
           const createdLabel = await createLabel(boardId, label.name, color);
           labelMap.set(label.name, createdLabel.id);
-          console.log(`  ✓ Created label: ${label.emoji} ${label.name}`);
+          console.log(`  ✓ Created label: ${label.name}`);
           await new Promise(resolve => setTimeout(resolve, 200));
         } catch (error) {
           console.error(`  ✗ Failed to create label ${label.name}:`, error);
         }
       } else {
-        console.log(`  ✓ Label already exists: ${label.emoji} ${label.name}`);
+        console.log(`  ✓ Label already exists: ${label.name}`);
       }
     }
   } catch (error) {
@@ -486,59 +568,58 @@ async function findOrCreateLabels(boardId, labels) {
 }
 
 /**
- * Create all cards with their properties
- * @param {string} boardId - Board ID
- * @param {Map} listMap - Map of list name to list ID
+ * Update existing card with new properties
+ * @param {object} card - Existing card object
+ * @param {object} cardDef - Card definition from markdown
  * @param {Map} labelMap - Map of label name to label ID
  * @param {Array} members - Array of workspace members
- * @param {Array} cards - Array of card definitions
+ * @returns {Promise<boolean>} Success status
  */
-async function createAllCards(boardId, listMap, labelMap, members, cards) {
-  console.log(`\nCreating ${cards.length} cards...`);
-  
-  for (const cardDef of cards) {
-    try {
-      const listId = listMap.get(cardDef.list);
-      if (!listId) {
-        console.log(`  ✗ Skipping card "${cardDef.title}" - list "${cardDef.list}" not found`);
-        continue;
-      }
+async function updateExistingCard(card, cardDef, labelMap, members) {
+  try {
+    let updated = false;
 
-      // Build card description
-      let description = cardDef.description || '';
-      if (cardDef.acceptanceCriteria.length > 0) {
-        if (description) description += '\n\n';
-        description += '**Acceptance Criteria:**\n';
-        description += cardDef.acceptanceCriteria.map(c => `- ${c}`).join('\n');
-      }
+    // Build card description
+    let description = cardDef.description || '';
+    if (cardDef.acceptanceCriteria.length > 0) {
+      if (description) description += '\n\n';
+      description += '**Acceptance Criteria:**\n';
+      description += cardDef.acceptanceCriteria.map(c => `- ${c}`).join('\n');
+    }
 
-      // Create card
-      const card = await createCard(listId, cardDef.title, description);
-      console.log(`  ✓ Created card: ${cardDef.title}`);
+    // Update description if different
+    if (card.desc !== description) {
+      await updateCardDescription(card.id, description);
+      updated = true;
+      console.log(`    ↻ Updated description`);
+    }
 
-      // Add labels
-      for (const labelDef of cardDef.labels) {
-        const labelId = labelMap.get(labelDef.name);
-        if (labelId) {
-          try {
-            await addLabelToCard(card.id, labelId);
-            await new Promise(resolve => setTimeout(resolve, 100));
-          } catch (error) {
-            console.error(`    ✗ Failed to add label ${labelDef.name} to card`);
-          }
+    // Add missing labels
+    const existingLabelIds = new Set(card.idLabels || []);
+    for (const labelDef of cardDef.labels) {
+      const labelId = labelMap.get(labelDef.name);
+      if (labelId && !existingLabelIds.has(labelId)) {
+        try {
+          await addLabelToCard(card.id, labelId);
+          console.log(`    ✓ Added label: ${labelDef.name}`);
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error(`    ✗ Failed to add label ${labelDef.name}`);
         }
       }
+    }
 
-      // Add assignee (if specified and member exists)
-      if (cardDef.assignee && cardDef.assignee !== 'You') {
-        // Try to find member by username or fullName
-        const member = members.find(m => 
-          m.username?.toLowerCase() === cardDef.assignee.toLowerCase() ||
-          m.fullName?.toLowerCase() === cardDef.assignee.toLowerCase() ||
-          m.username?.toLowerCase().includes(cardDef.assignee.toLowerCase())
-        );
-        
-        if (member) {
+    // Add assignee (if specified and member exists and not already assigned)
+    if (cardDef.assignee && cardDef.assignee !== 'You') {
+      const member = members.find(m => 
+        m.username?.toLowerCase() === cardDef.assignee.toLowerCase() ||
+        m.fullName?.toLowerCase() === cardDef.assignee.toLowerCase() ||
+        m.username?.toLowerCase().includes(cardDef.assignee.toLowerCase())
+      );
+      
+      if (member) {
+        const isAssigned = card.idMembers?.includes(member.id);
+        if (!isAssigned) {
           try {
             await addMember('card', card.id, member.id);
             console.log(`    ✓ Assigned to: ${member.fullName || member.username}`);
@@ -548,33 +629,157 @@ async function createAllCards(boardId, listMap, labelMap, members, cards) {
           }
         }
       }
+    }
 
-      // Set due date (skip for now - user can set manually)
-      if (cardDef.dueDate) {
-        console.log(`    ℹ Due date: ${cardDef.dueDate} (set manually in Trello)`);
-      }
+    // Update checklist - add missing items
+    if (cardDef.checklist.length > 0) {
+      try {
+        const checklists = await getCardChecklists(card.id);
+        let checklist = checklists.find(c => c.name === 'Checklist');
+        
+        if (!checklist) {
+          checklist = await createChecklist(card.id, 'Checklist');
+          console.log(`    ✓ Created checklist`);
+        }
 
-      // Create checklist
-      if (cardDef.checklist.length > 0) {
-        try {
-          const checklist = await createChecklist(card.id, 'Checklist');
-          console.log(`    ✓ Created checklist with ${cardDef.checklist.length} items`);
-          
-          for (const item of cardDef.checklist) {
+        // Get existing items
+        const existingItems = await getChecklistItems(checklist.id);
+        const existingItemNames = new Set(existingItems.map(item => item.name.trim().toLowerCase()));
+
+        // Add missing items
+        let addedItems = 0;
+        for (const item of cardDef.checklist) {
+          if (!existingItemNames.has(item.name.trim().toLowerCase())) {
             await addChecklistItem(checklist.id, item.name, item.checked);
+            addedItems++;
             await new Promise(resolve => setTimeout(resolve, 100));
           }
-        } catch (error) {
-          console.error(`    ✗ Failed to create checklist`);
+        }
+
+        if (addedItems > 0) {
+          console.log(`    ✓ Added ${addedItems} new checklist items`);
+        }
+      } catch (error) {
+        console.error(`    ✗ Failed to update checklist`);
+      }
+    }
+
+    return updated;
+  } catch (error) {
+    console.error(`Error updating card:`, error);
+    return false;
+  }
+}
+
+/**
+ * Create all cards with their properties (or update existing ones)
+ * @param {string} boardId - Board ID
+ * @param {Map} listMap - Map of list name to list ID
+ * @param {Map} labelMap - Map of label name to label ID
+ * @param {Array} members - Array of workspace members
+ * @param {Array} cards - Array of card definitions
+ */
+async function createAllCards(boardId, listMap, labelMap, members, cards) {
+  console.log(`\nProcessing ${cards.length} cards...`);
+  
+  let createdCount = 0;
+  let updatedCount = 0;
+  let skippedCount = 0;
+
+  for (const cardDef of cards) {
+    try {
+      const listId = listMap.get(cardDef.list);
+      if (!listId) {
+        console.log(`  ✗ Skipping card "${cardDef.title}" - list "${cardDef.list}" not found`);
+        skippedCount++;
+        continue;
+      }
+
+      // Check if card already exists
+      const existingCard = await findExistingCard(listId, cardDef.title);
+      
+      if (existingCard) {
+        console.log(`  ⊙ Found existing card: ${cardDef.title}`);
+        const updated = await updateExistingCard(existingCard, cardDef, labelMap, members);
+        if (updated) {
+          updatedCount++;
+        } else {
+          console.log(`    ✓ Card already up to date`);
+        }
+      } else {
+        // Build card description
+        let description = cardDef.description || '';
+        if (cardDef.acceptanceCriteria.length > 0) {
+          if (description) description += '\n\n';
+          description += '**Acceptance Criteria:**\n';
+          description += cardDef.acceptanceCriteria.map(c => `- ${c}`).join('\n');
+        }
+
+        // Create new card
+        const card = await createCard(listId, cardDef.title, description);
+        console.log(`  ✓ Created card: ${cardDef.title}`);
+        createdCount++;
+
+        // Add labels
+        for (const labelDef of cardDef.labels) {
+          const labelId = labelMap.get(labelDef.name);
+          if (labelId) {
+            try {
+              await addLabelToCard(card.id, labelId);
+              await new Promise(resolve => setTimeout(resolve, 100));
+            } catch (error) {
+              console.error(`    ✗ Failed to add label ${labelDef.name} to card`);
+            }
+          }
+        }
+
+        // Add assignee (if specified and member exists)
+        if (cardDef.assignee && cardDef.assignee !== 'You') {
+          const member = members.find(m => 
+            m.username?.toLowerCase() === cardDef.assignee.toLowerCase() ||
+            m.fullName?.toLowerCase() === cardDef.assignee.toLowerCase() ||
+            m.username?.toLowerCase().includes(cardDef.assignee.toLowerCase())
+          );
+          
+          if (member) {
+            try {
+              await addMember('card', card.id, member.id);
+              console.log(`    ✓ Assigned to: ${member.fullName || member.username}`);
+              await new Promise(resolve => setTimeout(resolve, 200));
+            } catch (error) {
+              console.error(`    ✗ Failed to assign member`);
+            }
+          }
+        }
+
+        // Create checklist
+        if (cardDef.checklist.length > 0) {
+          try {
+            const checklist = await createChecklist(card.id, 'Checklist');
+            console.log(`    ✓ Created checklist with ${cardDef.checklist.length} items`);
+            
+            for (const item of cardDef.checklist) {
+              await addChecklistItem(checklist.id, item.name, item.checked);
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+          } catch (error) {
+            console.error(`    ✗ Failed to create checklist`);
+          }
         }
       }
 
       // Delay between cards to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
-      console.error(`  ✗ Failed to create card "${cardDef.title}":`, error);
+      console.error(`  ✗ Failed to process card "${cardDef.title}":`, error);
+      skippedCount++;
     }
   }
+
+  console.log(`\n✅ Card processing complete!`);
+  console.log(`  Created: ${createdCount}`);
+  console.log(`  Updated: ${updatedCount}`);
+  console.log(`  Skipped: ${skippedCount}`);
 }
 
 // %%%%%%%% END - MAIN CREATION FUNCTIONS %%%%%%%

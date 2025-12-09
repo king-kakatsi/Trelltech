@@ -16,17 +16,17 @@
 9. **Suggestions** - Ideas and improvements
 
 ## Labels
-- 🔴 **P0-Critical** (must complete)
-- 🟠 **P1-High** (important)
-- 🟡 **P2-Medium** (nice to have)
-- 🔵 **Dev1** (Orders/Checkout/Cart)
-- 🟢 **Dev2** (Catalog/Products/Stores)
-- 🟣 **Dev3** (Admin/Payments/Integrations)
-- ⚪ **Weekend** (Your tasks)
-- 🐛 **Bug**
-- 📝 **Documentation**
-- 🔧 **Integration**
-- ⚡ **Real-time**
+- **P0-Critical** (must complete)
+- **P1-High** (important)
+- **P2-Medium** (nice to have)
+- **Dev1** (Orders/Checkout/Cart)
+- **Dev2** (Catalog/Products/Stores)
+- **Dev3** (Admin/Payments/Integrations)
+- **Weekend** (Your tasks)
+- **Bug**
+- **Documentation**
+- **Integration**
+- **Real-time**
 
 ---
 
@@ -34,7 +34,7 @@
 
 ### Card: "Orders & Cart Foundation - Week 1"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 1
 
@@ -62,7 +62,7 @@
 
 ### Card: "Order Entity & Repository - Week 1"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 1
 
@@ -85,7 +85,7 @@
 
 ### Card: "Complete ProductListing GET Endpoints"
 **List:** Sprint Of The Week  
-**Labels:** 🟠 P1-High, 🟢 Dev2  
+**Labels:** P1-High, Dev2  
 **Assignee:** Dev2  
 **Due Date:** End of Week 1
 
@@ -106,9 +106,39 @@
 
 ---
 
+### Card: "Services Support - Products & Services Listings"
+**List:** Sprint Of The Week  
+**Labels:** P0-Critical, Dev2  
+**Assignee:** Dev2  
+**Due Date:** End of Week 1
+
+**Description:**
+Extend the listing system to support both products and services. Users can provide services in addition to selling products.
+
+**Checklist:**
+- [ ] Add ListingType enum (Product, Service)
+- [ ] Update ProductListing entity to support service type
+- [ ] Add service-specific fields (duration, service category, availability)
+- [ ] Update ProductListingController to handle service listings
+- [ ] Implement GET /api/ProductListing/services - Get all services
+- [ ] Implement GET /api/ProductListing/products - Get all products
+- [ ] Update search to filter by listing type
+- [ ] Add service booking/request functionality
+- [ ] Update XML documentation
+- [ ] Unit tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- Users can create both product and service listings
+- Service listings have appropriate fields
+- Search and filtering work for both types
+- All endpoints tested and documented
+
+---
+
 ### Card: "Complete Stores GET Endpoints"
 **List:** Sprint Of The Week  
-**Labels:** 🟠 P1-High, 🟢 Dev2  
+**Labels:** P1-High, Dev2  
 **Assignee:** Dev2  
 **Due Date:** End of Week 1
 
@@ -129,7 +159,7 @@
 
 ### Card: "Payment Foundation Setup"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🟣 Dev3, 🔧 Integration  
+**Labels:** P0-Critical, Dev3, Integration  
 **Assignee:** Dev3  
 **Due Date:** End of Week 1
 
@@ -154,7 +184,7 @@
 
 ### Card: "Weekend Work - Week 1 Review & Setup"
 **List:** Sprint Of The Week  
-**Labels:** ⚪ Weekend, 📝 Documentation  
+**Labels:** Weekend, Documentation  
 **Assignee:** You  
 **Due Date:** End of Week 1
 
@@ -181,7 +211,7 @@
 
 ### Card: "Order Controller & Service - Week 2"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 2
 
@@ -209,7 +239,7 @@
 
 ### Card: "Cart to Order Conversion"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** Mid Week 2
 
@@ -232,7 +262,7 @@
 
 ### Card: "Search Integration Setup"
 **List:** Sprint Of The Week  
-**Labels:** 🟡 P2-Medium, 🟢 Dev2, 🔧 Integration  
+**Labels:** P2-Medium, Dev2, Integration  
 **Assignee:** Dev2  
 **Due Date:** End of Week 2
 
@@ -256,7 +286,7 @@
 
 ### Card: "Flutterwave Payment Integration"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🟣 Dev3, 🔧 Integration  
+**Labels:** P0-Critical, Dev3, Integration  
 **Assignee:** Dev3  
 **Due Date:** End of Week 2
 
@@ -284,7 +314,7 @@
 
 ### Card: "Weekend Work - Week 2 Review"
 **List:** Sprint Of The Week  
-**Labels:** ⚪ Weekend  
+**Labels:** Weekend  
 **Assignee:** You  
 **Due Date:** End of Week 2
 
@@ -309,7 +339,7 @@
 
 ### Card: "Escrow Service Implementation"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 3
 
@@ -337,7 +367,7 @@
 
 ### Card: "Payment-Order Integration"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 3
 
@@ -359,12 +389,12 @@
 
 ### Card: "Advanced Search Features"
 **List:** Sprint Of The Week  
-**Labels:** 🟠 P1-High, 🟢 Dev2  
+**Labels:** P1-High, Dev2  
 **Assignee:** Dev2  
 **Due Date:** End of Week 3
 
 **Checklist:**
-- [ ] Implement advanced search filters (price, location, condition, brand)
+- [ ] Implement advanced search filters (price, location, condition, brand, listing type)
 - [ ] Combine multiple filters
 - [ ] Search sorting options
 - [ ] Search pagination
@@ -380,9 +410,44 @@
 
 ---
 
+### Card: "Promotions & Discounts System"
+**List:** Sprint Of The Week  
+**Labels:** P1-High, Dev2  
+**Assignee:** Dev2  
+**Due Date:** End of Week 3
+
+**Description:**
+Implement promotions and running discounts system for products and services. Sellers can create promotions and apply discounts.
+
+**Checklist:**
+- [ ] Create Promotion entity (TblRosPromotions)
+- [ ] Create PromotionRepository
+- [ ] Create PromotionService interface (IPromotionService)
+- [ ] Implement promotion types (percentage, fixed amount, buy-one-get-one)
+- [ ] Create PromotionController
+- [ ] Implement POST /api/Promotions - Create promotion
+- [ ] Implement GET /api/Promotions/active - Get active promotions
+- [ ] Implement GET /api/Promotions/product/{productId} - Get product promotions
+- [ ] Implement PUT /api/Promotions/{id} - Update promotion
+- [ ] Implement DELETE /api/Promotions/{id} - Delete promotion
+- [ ] Promotion validation and date range checks
+- [ ] Apply discount logic to cart/order calculations
+- [ ] Add XML documentation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- Promotions can be created and managed
+- Discounts apply correctly to orders
+- Date range validation working
+- All endpoints tested and documented
+
+---
+
 ### Card: "MTN Mobile Money Integration"
 **List:** Sprint Of The Week  
-**Labels:** 🟠 P1-High, 🟣 Dev3, 🔧 Integration  
+**Labels:** P1-High, Dev3, Integration  
 **Assignee:** Dev3  
 **Due Date:** End of Week 3
 
@@ -406,7 +471,7 @@
 
 ### Card: "Payment Provider Abstraction"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🟣 Dev3  
+**Labels:** P0-Critical, Dev3  
 **Assignee:** Dev3  
 **Due Date:** End of Week 3
 
@@ -427,9 +492,44 @@
 
 ---
 
+### Card: "Product Boosting & Platform Posts"
+**List:** Sprint Of The Week  
+**Labels:** P1-High, Dev2  
+**Assignee:** Dev2  
+**Due Date:** End of Week 3
+
+**Description:**
+Implement product boosting feature where sellers can boost their products for better visibility, and platform posts for content sharing.
+
+**Checklist:**
+- [ ] Create Boost entity (TblRosProductBoosts)
+- [ ] Create PlatformPost entity (TblRosPlatformPosts)
+- [ ] Create BoostRepository and PostRepository
+- [ ] Create BoostService and PostService interfaces
+- [ ] Create BoostController and PostController
+- [ ] Implement POST /api/Boosts - Create boost for product
+- [ ] Implement GET /api/Boosts/active - Get active boosts
+- [ ] Implement POST /api/Posts - Create platform post
+- [ ] Implement GET /api/Posts - Get platform posts (feed)
+- [ ] Implement GET /api/Posts/user/{userId} - Get user posts
+- [ ] Boost priority algorithm for product visibility
+- [ ] Boost expiration and renewal logic
+- [ ] Add XML documentation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- Products can be boosted for visibility
+- Platform posts can be created and retrieved
+- Boost priority affects product ranking
+- All endpoints tested and documented
+
+---
+
 ### Card: "Weekend Work - Week 3 Integration Testing"
 **List:** Sprint Of The Week  
-**Labels:** ⚪ Weekend  
+**Labels:** Weekend  
 **Assignee:** You  
 **Due Date:** End of Week 3
 
@@ -453,7 +553,7 @@
 
 ### Card: "Complete Payment-Order Workflow"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 4
 
@@ -475,7 +575,7 @@
 
 ### Card: "Refund Implementation"
 **List:** Sprint Of The Week  
-**Labels:** 🟠 P1-High, 🔵 Dev1  
+**Labels:** P1-High, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 4
 
@@ -497,7 +597,7 @@
 
 ### Card: "Additional Payment Providers"
 **List:** Sprint Of The Week  
-**Labels:** 🟠 P1-High, 🟣 Dev3, 🔧 Integration  
+**Labels:** P1-High, Dev3, Integration  
 **Assignee:** Dev3  
 **Due Date:** End of Week 4
 
@@ -521,7 +621,7 @@
 
 ### Card: "Auction System - Week 5"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 5
 
@@ -548,7 +648,7 @@
 
 ### Card: "Bidding System - Week 5"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🟢 Dev2  
+**Labels:** P0-Critical, Dev2  
 **Assignee:** Dev2  
 **Due Date:** End of Week 5
 
@@ -575,7 +675,7 @@
 
 ### Card: "Auction Background Jobs"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🟣 Dev3  
+**Labels:** P0-Critical, Dev3  
 **Assignee:** Dev3  
 **Due Date:** End of Week 5
 
@@ -599,7 +699,7 @@
 
 ### Card: "Weekend Work - Auction Testing"
 **List:** Sprint Of The Week  
-**Labels:** ⚪ Weekend  
+**Labels:** Weekend  
 **Assignee:** You  
 **Due Date:** End of Week 5
 
@@ -622,7 +722,7 @@
 
 ### Card: "Real-time Infrastructure - Week 6"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🟣 Dev3, ⚡ Real-time  
+**Labels:** P0-Critical, Dev3, Real-time  
 **Assignee:** Dev3  
 **Due Date:** End of Week 6
 
@@ -648,7 +748,7 @@
 
 ### Card: "Buyer Dashboard - Week 6"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 6
 
@@ -674,7 +774,7 @@
 
 ### Card: "Seller Dashboard - Week 6"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🟢 Dev2  
+**Labels:** P0-Critical, Dev2  
 **Assignee:** Dev2  
 **Due Date:** End of Week 6
 
@@ -699,15 +799,188 @@
 
 ---
 
+### Card: "Social Media - Follow & Unfollow System"
+**List:** Sprint Of The Week  
+**Labels:** P0-Critical, Dev2  
+**Assignee:** Dev2  
+**Due Date:** End of Week 6
+
+**Description:**
+Implement social media follow/unfollow functionality. Users can follow and unfollow other users to build their network.
+
+**Checklist:**
+- [ ] Create UserFollow entity (TblRosUserFollows)
+- [ ] Create FollowRepository
+- [ ] Create FollowService interface (IFollowService)
+- [ ] Create FollowController
+- [ ] Implement POST /api/Follow/{userId} - Follow user
+- [ ] Implement DELETE /api/Follow/{userId} - Unfollow user
+- [ ] Implement GET /api/Follow/followers/{userId} - Get user followers
+- [ ] Implement GET /api/Follow/following/{userId} - Get users following
+- [ ] Implement GET /api/Follow/status/{userId} - Check follow status
+- [ ] Follow count caching
+- [ ] Add XML documentation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- Users can follow and unfollow each other
+- Follow counts are accurate
+- Follow status can be checked
+- All endpoints tested and documented
+
+---
+
+### Card: "Social Media - User Profiles"
+**List:** Sprint Of The Week  
+**Labels:** P0-Critical, Dev2  
+**Assignee:** Dev2  
+**Due Date:** End of Week 6
+
+**Description:**
+Implement user profile viewing functionality. Users can view other users' profiles with their listings, followers, and activity.
+
+**Checklist:**
+- [ ] Create ProfileController
+- [ ] Implement GET /api/Profile/{userId} - Get user profile
+- [ ] Implement GET /api/Profile/{userId}/listings - Get user listings
+- [ ] Implement GET /api/Profile/{userId}/stats - Get user statistics
+- [ ] Profile privacy settings
+- [ ] Profile picture and bio support
+- [ ] Profile activity feed
+- [ ] Add XML documentation
+- [ ] Unit tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- User profiles can be viewed
+- Profile data includes listings and stats
+- Privacy settings respected
+- All endpoints tested and documented
+
+---
+
+### Card: "Social Media - Interactions (Like, Share, Repost, Comments)"
+**List:** Sprint Of The Week  
+**Labels:** P0-Critical, Dev1  
+**Assignee:** Dev1  
+**Due Date:** End of Week 6
+
+**Description:**
+Implement social media interactions: like, share, repost, and comments for products, services, posts, and reels.
+
+**Checklist:**
+- [ ] Create Interaction entity (TblRosInteractions) with type enum (Like, Share, Repost)
+- [ ] Create Comment entity (TblRosComments) for posts/reels
+- [ ] Create InteractionRepository and CommentRepository
+- [ ] Create InteractionService and CommentService interfaces
+- [ ] Create InteractionController and CommentController
+- [ ] Implement POST /api/Interactions/like - Like item
+- [ ] Implement DELETE /api/Interactions/like/{itemId} - Unlike item
+- [ ] Implement POST /api/Interactions/share - Share item
+- [ ] Implement POST /api/Interactions/repost - Repost item
+- [ ] Implement POST /api/Comments - Add comment
+- [ ] Implement GET /api/Comments/{itemId} - Get comments for item
+- [ ] Implement PUT /api/Comments/{id} - Update comment
+- [ ] Implement DELETE /api/Comments/{id} - Delete comment
+- [ ] Interaction count caching
+- [ ] Add XML documentation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- Users can like, share, and repost items
+- Comments can be added, updated, and deleted
+- Interaction counts are accurate
+- All endpoints tested and documented
+
+---
+
+### Card: "Social Media - Status & Stories"
+**List:** Sprint Of The Week  
+**Labels:** P1-High, Dev2  
+**Assignee:** Dev2  
+**Due Date:** End of Week 6
+
+**Description:**
+Implement status and stories functionality similar to Instagram stories. Users can add status updates and stories that expire after 24 hours.
+
+**Checklist:**
+- [ ] Create Status entity (TblRosStatuses)
+- [ ] Create Story entity (TblRosStories)
+- [ ] Create StatusRepository and StoryRepository
+- [ ] Create StatusService and StoryService interfaces
+- [ ] Create StatusController and StoryController
+- [ ] Implement POST /api/Status - Add status update
+- [ ] Implement GET /api/Status/{userId} - Get user status
+- [ ] Implement POST /api/Stories - Create story
+- [ ] Implement GET /api/Stories/feed - Get stories feed
+- [ ] Implement GET /api/Stories/{userId} - Get user stories
+- [ ] Story expiration logic (24 hours)
+- [ ] Background job to delete expired stories
+- [ ] Story view tracking
+- [ ] Add XML documentation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- Users can add status updates
+- Stories can be created and viewed
+- Stories expire after 24 hours
+- Story views are tracked
+- All endpoints tested and documented
+
+---
+
+### Card: "Social Media - Chat System"
+**List:** Sprint Of The Week  
+**Labels:** P0-Critical, Dev3, Real-time  
+**Assignee:** Dev3  
+**Due Date:** End of Week 6
+
+**Description:**
+Implement real-time chat system for users to communicate with each other and with sellers.
+
+**Checklist:**
+- [ ] Create Chat entity (TblRosChats)
+- [ ] Create Message entity (TblRosMessages)
+- [ ] Create ChatRepository and MessageRepository
+- [ ] Create ChatService and MessageService interfaces
+- [ ] Create ChatHub for SignalR
+- [ ] Create ChatController
+- [ ] Implement POST /api/Chats - Create or get chat
+- [ ] Implement GET /api/Chats - Get user chats
+- [ ] Implement GET /api/Chats/{chatId}/messages - Get chat messages
+- [ ] Implement real-time message broadcasting via SignalR
+- [ ] Message read receipts
+- [ ] Typing indicators
+- [ ] Chat notifications
+- [ ] Add XML documentation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- Users can create chats and send messages
+- Real-time messaging works via SignalR
+- Read receipts and typing indicators functional
+- All endpoints tested and documented
+
+---
+
 ### Card: "Weekend Work - Dashboard & Real-time Testing"
 **List:** Sprint Of The Week  
-**Labels:** ⚪ Weekend  
+**Labels:** Weekend  
 **Assignee:** You  
 **Due Date:** End of Week 6
 
 **Checklist:**
 - [ ] Test real-time functionality
 - [ ] Test dashboard endpoints
+- [ ] Test social media features
 - [ ] Performance testing
 - [ ] Frontend integration verification
 - [ ] Update documentation
@@ -716,6 +989,7 @@
 **Acceptance Criteria:**
 - Real-time tested and working
 - Dashboards functional
+- Social features tested
 - Ready for final week
 
 ---
@@ -724,7 +998,7 @@
 
 ### Card: "Reviews & Ratings API"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical, 🔵 Dev1  
+**Labels:** P0-Critical, Dev1  
 **Assignee:** Dev1  
 **Due Date:** End of Week 7
 
@@ -753,7 +1027,7 @@
 
 ### Card: "Admin & Moderation APIs"
 **List:** Sprint Of The Week  
-**Labels:** 🟠 P1-High, 🟣 Dev3  
+**Labels:** P1-High, Dev3  
 **Assignee:** Dev3  
 **Due Date:** End of Week 7
 
@@ -778,7 +1052,7 @@
 
 ### Card: "Notifications Service"
 **List:** Sprint Of The Week  
-**Labels:** 🟠 P1-High, 🟣 Dev3  
+**Labels:** P1-High, Dev3  
 **Assignee:** Dev3  
 **Due Date:** End of Week 7
 
@@ -801,15 +1075,95 @@
 
 ---
 
+### Card: "Live Trading System"
+**List:** Sprint Of The Week  
+**Labels:** P0-Critical, Dev3, Real-time  
+**Assignee:** Dev3  
+**Due Date:** End of Week 7
+
+**Description:**
+Implement live trading functionality where users can request live sessions with vendors/sellers, and sellers can go live to display products in real-time.
+
+**Checklist:**
+- [ ] Create LiveSession entity (TblRosLiveSessions)
+- [ ] Create LiveSessionRequest entity (TblRosLiveSessionRequests)
+- [ ] Create LiveSessionRepository
+- [ ] Create LiveSessionService interface (ILiveSessionService)
+- [ ] Create LiveSessionHub for SignalR
+- [ ] Create LiveSessionController
+- [ ] Implement POST /api/LiveSessions/start - Seller starts live session
+- [ ] Implement POST /api/LiveSessions/request - User requests live session
+- [ ] Implement GET /api/LiveSessions/active - Get active live sessions
+- [ ] Implement GET /api/LiveSessions/{sessionId} - Get session details
+- [ ] Implement POST /api/LiveSessions/{sessionId}/join - Join live session
+- [ ] Implement POST /api/LiveSessions/{sessionId}/end - End live session
+- [ ] Real-time video/stream integration (WebRTC or streaming service)
+- [ ] Live session notifications
+- [ ] Session recording (optional)
+- [ ] Add XML documentation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- Sellers can start live sessions
+- Users can request live sessions with sellers
+- Real-time streaming works
+- Session management functional
+- All endpoints tested and documented
+
+---
+
+### Card: "AI Personalization & Recommendation System"
+**List:** Sprint Of The Week  
+**Labels:** P0-Critical, Dev3, Integration  
+**Assignee:** Dev3  
+**Due Date:** End of Week 7
+
+**Description:**
+Implement AI-powered personalization system for recommending products, services, reels, and posts to users based on their behavior and preferences.
+
+**Checklist:**
+- [ ] Research AI/ML recommendation algorithms (collaborative filtering, content-based)
+- [ ] Choose ML framework (TensorFlow, ML.NET, or cloud service)
+- [ ] Create UserBehavior entity (TblRosUserBehaviors) for tracking
+- [ ] Create RecommendationService interface (IRecommendationService)
+- [ ] Implement user behavior tracking (views, likes, purchases, searches)
+- [ ] Create RecommendationController
+- [ ] Implement GET /api/Recommendations/products - Get product recommendations
+- [ ] Implement GET /api/Recommendations/services - Get service recommendations
+- [ ] Implement GET /api/Recommendations/reels - Get reel recommendations
+- [ ] Implement GET /api/Recommendations/posts - Get post recommendations
+- [ ] Implement training pipeline for recommendation model
+- [ ] Model training and evaluation
+- [ ] Recommendation caching for performance
+- [ ] A/B testing framework for recommendations
+- [ ] Add XML documentation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] Update Postman collection
+
+**Acceptance Criteria:**
+- AI recommendation system functional
+- Recommendations generated for products, services, reels, and posts
+- Model training pipeline working
+- Recommendations are personalized and relevant
+- All endpoints tested and documented
+
+---
+
 ### Card: "Final Testing & Integration - Week 7"
 **List:** Sprint Of The Week  
-**Labels:** 🔴 P0-Critical  
+**Labels:** P0-Critical  
 **Assignee:** All  
 **Due Date:** End of Week 7
 
 **Checklist:**
 - [ ] End-to-end testing of all modules
 - [ ] Integration testing
+- [ ] Social media features testing
+- [ ] Live trading testing
+- [ ] AI recommendations testing
 - [ ] Performance testing
 - [ ] Security audit
 - [ ] Bug fixes
@@ -829,7 +1183,7 @@
 
 ### Card: "Weekend Work - Final Review & Deployment Prep"
 **List:** Sprint Of The Week  
-**Labels:** ⚪ Weekend, 📝 Documentation  
+**Labels:** Weekend, Documentation  
 **Assignee:** You  
 **Due Date:** End of Week 7
 
@@ -855,7 +1209,7 @@
 
 ### Card: "API Documentation Reference"
 **List:** Ressources  
-**Labels:** 📝 Documentation
+**Labels:** Documentation
 
 **Description:**
 Links and references:
@@ -868,7 +1222,7 @@ Links and references:
 
 ### Card: "Payment Integration Guides"
 **List:** Ressources  
-**Labels:** 🔧 Integration, 📝 Documentation
+**Labels:** Integration, Documentation
 
 **Description:**
 - Flutterwave API docs: [link]
@@ -880,7 +1234,7 @@ Links and references:
 
 ### Card: "Database Schema Reference"
 **List:** Ressources  
-**Labels:** 📝 Documentation
+**Labels:** Documentation
 
 **Description:**
 - Entity models location
@@ -892,7 +1246,7 @@ Links and references:
 
 ### Card: "SignalR & Real-time Setup"
 **List:** Ressources  
-**Labels:** ⚡ Real-time, 📝 Documentation
+**Labels:** Real-time, Documentation
 
 **Description:**
 - SignalR documentation
