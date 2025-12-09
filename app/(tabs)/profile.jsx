@@ -110,6 +110,15 @@ export default function ProfileScreen() {
         </View>
 
         <Pressable
+          onPress={() => router.push('/create-board')}
+          className="bg-[#0079BF] py-4 rounded-xl active:opacity-80 mb-4"
+        >
+          <Text className="text-white text-center font-semibold text-lg">
+            Update Trello Board from Markdown
+          </Text>
+        </Pressable>
+
+        <Pressable
           onPress={handleLogout}
           className="bg-[#EB5A46] py-4 rounded-xl active:opacity-80"
         >

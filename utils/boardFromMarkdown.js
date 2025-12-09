@@ -274,12 +274,12 @@ function parseMarkdownContent(content) {
     }
 
     if (currentSection === 'labels' && line.startsWith('- ')) {
-      const labelMatch = line.match(/^-\s*(.+?)\s+\*\*(.+?)\*\*\s*\((.+?)\)/);
+      // Handle labels with or without emojis
+      const labelMatch = line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*\s*\((.+?)\)/);
       if (labelMatch) {
         result.labels.push({
-          emoji: labelMatch[1].trim(),
-          name: labelMatch[2].trim(),
-          description: labelMatch[3].trim()
+          name: labelMatch[1].trim(),
+          description: labelMatch[2].trim()
         });
       }
     }
