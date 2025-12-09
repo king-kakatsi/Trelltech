@@ -33,11 +33,13 @@ export default function AddBranchCommentsScreen() {
       setResult(result);
 
       if (result.success) {
-        Alert.alert(
-          'Success!',
-          `Added branch comments to ${result.commentedCards} cards!\n\nSkipped: ${result.skippedCards} (Week 1 cards)`,
-          [{ text: 'OK' }]
-        );
+        const summary = [
+          `✓ Success!`,
+          `\nNew comments: ${result.commentedCards || 0} cards`,
+          `Updated comments: ${result.updatedCards || 0} cards`,
+          `Total processed: ${result.totalCards || 0} cards`,
+        ].join('\n');
+        Alert.alert('Success!', summary, [{ text: 'OK' }]);
       } else {
         Alert.alert('Error', result.error || 'Failed to add comments');
       }

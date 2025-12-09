@@ -119,6 +119,15 @@ export default function ProfileScreen() {
         </Pressable>
 
         <Pressable
+          onPress={() => router.push('/add-branch-comments')}
+          className="bg-[#61BD4F] py-4 rounded-xl active:opacity-80 mb-4"
+        >
+          <Text className="text-white text-center font-semibold text-lg">
+            Add Branch Comments to All Cards
+          </Text>
+        </Pressable>
+
+        <Pressable
           onPress={handleLogout}
           className="bg-[#EB5A46] py-4 rounded-xl active:opacity-80"
         >
