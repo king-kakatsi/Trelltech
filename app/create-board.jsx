@@ -6,7 +6,9 @@
 
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, Alert, TextInput } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { createBoardFromMarkdown } from '../utils/boardFromMarkdown';
+import TRELLO_PLANNING_PROMPT from '../utils/trelloPlanningPrompt.md?raw';
 
 // %%%%%%%% CREATE BOARD SCREEN %%%%%%%
 
@@ -18,8 +20,8 @@ export default function CreateBoardScreen() {
   const handleCreateBoard = async () => {
     if (!markdownContent.trim()) {
       Alert.alert(
-        'Markdown Content Required',
-        'Please paste the content of TRELLO_BOARD_ORGANIZATION.md in the text area above, or provide it programmatically.',
+      'Markdown Content Required',
+      'Please paste your Trello board organization markdown content in the text area above. You can generate this using the AI prompt button above.',
         [{ text: 'OK' }]
       );
       return;
@@ -57,16 +59,41 @@ export default function CreateBoardScreen() {
           Create Cards from Markdown
         </Text>
         <Text className="text-gray-400 text-sm mb-4">
-          This will add all cards from TRELLO_BOARD_ORGANIZATION.md to your existing Trello board.
+          Create and manage your Trello board from a markdown file.
           {'\n\n'}The script will:
-          {'\n'}• Find your existing organization and board
-          {'\n'}• Use existing lists
+          {'\n'}• Find or create your organization and board
+          {'\n'}• Use existing lists or create missing ones
           {'\n'}• Create missing labels if needed
-          {'\n'}• Create all cards with checklists, labels, and assignments
+          {'\n'}• Create/update all cards with checklists, labels, and assignments
+          {'\n'}• Update existing cards without creating duplicates
         </Text>
 
+        <View className="bg-gray-700 rounded-lg p-4 mb-4">
+          <Text className="text-white font-semibold mb-2">
+            Need to generate markdown from your project spec?
+          </Text>
+          <Text className="text-gray-300 text-sm mb-3">
+            Copy the AI prompt below, paste it into your AI assistant along with your project specification, and get a complete Trello board organization markdown.
+          </Text>
+          <TouchableOpacity
+            onPress={async () => {
+              try {
+                Clipboard.setString(TRELLO_PLANNING_PROMPT);
+                Alert.alert('Copied!', 'The AI prompt has been copied to your clipboard. Paste it into your AI assistant along with your project specification.');
+              } catch (error) {
+                Alert.alert('Error', 'Failed to copy prompt');
+              }
+            }}
+            className="bg-purple-600 rounded-lg p-3 items-center"
+          >
+            <Text className="text-white font-semibold">
+              📋 Copy AI Prompt for Markdown Generation
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <Text className="text-gray-300 text-sm mb-2 font-semibold">
-          Paste TRELLO_BOARD_ORGANIZATION.md content:
+          Paste your Trello board organization markdown content:
         </Text>
         <TextInput
           value={markdownContent}

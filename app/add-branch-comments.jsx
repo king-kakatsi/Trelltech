@@ -88,27 +88,48 @@ export default function AddBranchCommentsScreen() {
       setLoading(true);
       const [success, workspaces] = await getAllWorkspaces();
       
-      if (success && workspaces) {
-        const starinx = workspaces.find(ws => 
-          ws.displayName?.toLowerCase() === 'starinx' || 
-          ws.name?.toLowerCase() === 'starinx'
-        );
-        
-        if (starinx) {
-          const boards = await getWorkspaceBoards(starinx.id);
-          const rosey = boards.find(b => 
-            b.name?.toLowerCase() === 'rosey' && !b.closed
-          );
-          
-          if (rosey) {
-            setBoardId(rosey.id);
-            Alert.alert('Success', `Found board: ${rosey.name} (${rosey.id})`);
+      if (success && workspaces && workspaces.length > 0) {
+        // If only one workspace, use it
+        if (workspaces.length === 1) {
+          const workspace = workspaces[0];
+          const boards = await getWorkspaceBoards(workspace.id);
+          if (boards && boards.length > 0) {
+            // If only one board, use it
+            if (boards.length === 1) {
+              setBoardId(boards[0].id);
+              Alert.alert('Success', `Found board: ${boards[0].name} (${boards[0].id})`);
+            } else {
+              // Multiple boards - let user know they need to specify
+              const boardNames = boards.map(b => b.name).join(', ');
+              Alert.alert(
+                'Multiple Boards Found',
+                `Found ${boards.length} boards: ${boardNames}\n\nPlease specify the board ID manually or use the first board.`,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { 
+                    text: 'Use First Board', 
+                    onPress: () => {
+                      setBoardId(boards[0].id);
+                      Alert.alert('Success', `Using board: ${boards[0].name}`);
+                    }
+                  }
+                ]
+              );
+            }
           } else {
-            Alert.alert('Error', 'Rosey board not found');
+            Alert.alert('Error', 'No boards found in this workspace');
           }
         } else {
-          Alert.alert('Error', 'Starinx organization not found');
+          // Multiple workspaces - show selection
+          const workspaceNames = workspaces.map(ws => ws.displayName || ws.name).join(', ');
+          Alert.alert(
+            'Multiple Workspaces Found',
+            `Found ${workspaces.length} workspaces: ${workspaceNames}\n\nPlease specify the workspace and board manually.`,
+            [{ text: 'OK' }]
+          );
         }
+      } else {
+        Alert.alert('Error', 'No workspaces found. Please create a workspace first.');
       }
     } catch (error) {
       Alert.alert('Error', error.message);
@@ -135,7 +156,7 @@ export default function AddBranchCommentsScreen() {
             disabled={loading}
             className="bg-green-600 rounded-lg p-3 mb-4 items-center"
           >
-            <Text className="text-white font-semibold">Find Rosey Board</Text>
+            <Text className="text-white font-semibold">Auto-Find Board</Text>
           </TouchableOpacity>
         )}
 
