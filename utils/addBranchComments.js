@@ -196,8 +196,11 @@ export async function addBranchCommentsToBoard(boardId, skipWeek1 = false, updat
           
           if (existingComment) {
             // Update existing comment to remove emoji if needed
-            const commentText = existingComment.data?.text || existingComment.text || '';
-            if (updateExisting && (commentText.includes('🌿') || commentText.includes('Branch:'))) {
+            const commentText = existingComment.data?.text || existingComment.data?.comment?.text || existingComment.text || '';
+            const expectedText = `Branch: \`${branchName}\``;
+            
+            // Update if it has emoji or doesn't match expected format
+            if (updateExisting && (commentText.includes('🌿') || commentText.trim() !== expectedText)) {
               const success = await updateBranchComment(card.id, existingComment.id, branchName);
               if (success) {
                 console.log(`  ↻ Updated branch comment: ${card.name} → ${branchName}`);
@@ -207,16 +210,21 @@ export async function addBranchCommentsToBoard(boardId, skipWeek1 = false, updat
                 errors.push(card.name);
               }
             } else {
-              console.log(`  ⊙ Already has branch comment: ${card.name}`);
+              console.log(`  ⊙ Already has correct branch comment: ${card.name}`);
             }
           } else {
-            // Add new comment
-            const success = await addBranchComment(card.id, branchName);
-            if (success) {
-              console.log(`  ✓ Added branch comment: ${card.name} → ${branchName}`);
-              commentedCards++;
-            } else {
-              console.log(`  ✗ Failed: ${card.name}`);
+            // Add new comment - card doesn't have a branch comment yet
+            try {
+              const success = await addBranchComment(card.id, branchName);
+              if (success) {
+                console.log(`  ✓ Added branch comment: ${card.name} → ${branchName}`);
+                commentedCards++;
+              } else {
+                console.log(`  ✗ Failed to add comment: ${card.name}`);
+                errors.push(card.name);
+              }
+            } catch (error) {
+              console.error(`  ✗ Error adding comment to ${card.name}:`, error.message || error);
               errors.push(card.name);
             }
           }
