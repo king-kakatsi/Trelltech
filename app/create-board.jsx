@@ -6,9 +6,9 @@
 
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, Alert, TextInput } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
+import { Clipboard } from 'react-native';
 import { createBoardFromMarkdown } from '../utils/boardFromMarkdown';
-import TRELLO_PLANNING_PROMPT from '../utils/trelloPlanningPrompt.md?raw';
+import { TRELLO_PLANNING_PROMPT } from '../utils/getPlanningPrompt';
 
 // %%%%%%%% CREATE BOARD SCREEN %%%%%%%
 
