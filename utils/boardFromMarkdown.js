@@ -306,7 +306,7 @@ function parseMarkdownContent(content) {
     // Parse cards — support "### Card: title" and "## Carte N : title"
     const cardHeaderMatch =
       line.match(/^###\s+Card:\s*"?(.+?)"?\s*$/) ||
-      line.match(/^##\s+Carte\s+\d+\s*:\s*(.+?)\s*$/);
+      line.match(/^##\s+Carte\s+[\d]+[a-zA-Z]?\s*:\s*(.+?)\s*$/);
     if (cardHeaderMatch) {
       if (currentCard && currentCard.title) {
         result.cards.push(currentCard);
