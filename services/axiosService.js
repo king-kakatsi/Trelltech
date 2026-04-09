@@ -1,5 +1,4 @@
 import axios from "axios";
-import { fetchFromLocalStorage } from "./localStorageService";
 
 const DEFAULT_BASE_URL = "https://api.trello.com/1";
 const DEFAULT_TIMEOUT = 30000;
@@ -32,10 +31,6 @@ export function createAxiosInstance(
   });
 
   instance.interceptors.request.use((config) => {
-    const token = fetchFromLocalStorage('trello_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   });
 

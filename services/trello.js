@@ -8,7 +8,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 export async function authenticate() {
 	// Générer une redirect URI adaptée à l'environnement (Expo Go via proxy si possible)
-	const redirectUri = AuthSession.makeRedirectUri({ useProxy: true, path: 'auth' }) || Linking.createURL('auth') || `${Linking.createURL('')}auth` || 'mobimobilo://auth';
+	const redirectUri = AuthSession.makeRedirectUri({ scheme: 'trelltech', path: 'auth' });
 	console.log('=== TRELLO AUTH DEBUG ===');
 	console.log('Computed redirectUri:', redirectUri);
 
@@ -108,7 +108,7 @@ export async function createCard(listId, token, { name, desc = "", start = null,
 	const endpoint = `/cards?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
 	const payload = { idList: listId, name, desc, start, due };
 
-	const [success, data] = await postWithApi(endpoint, payload, "post");
+	const [success, data] = await postWithApi(endpoint, payload);
 	return success ? data : null;
 }
 
@@ -146,7 +146,7 @@ export async function addMemberToCard(cardId, memberId, token) {
 	const endpoint = `/cards/${cardId}/idMembers?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
 	const payload = { value: memberId };
 
-	const [success, data] = await postWithApi(endpoint, payload, "post");
+	const [success, data] = await postWithApi(endpoint, payload);
 	return success ? data : null;
 }
 
@@ -163,7 +163,7 @@ export async function addComment(cardId, token, text) {
 	const endpoint = `/cards/${cardId}/actions/comments?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
 	const payload = { text };
 
-	const [success, data] = await postWithApi(endpoint, payload, "post");
+	const [success, data] = await postWithApi(endpoint, payload);
 	return success ? data : null;
 }
 
