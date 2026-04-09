@@ -238,32 +238,43 @@ function parseMarkdownContent(content) {
   let currentSection = null;
   let currentCard = null;
 
+  // Normalize a line: collapse " :" to ":" for field matching (handles French " :" spacing)
+  const norm = (line) => line.replace(/\s+:/g, ':');
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
+    const n = norm(line);
 
-    // Parse organization
-    if (line.startsWith('- **Organization:**')) {
-      result.organization = line.replace('- **Organization:**', '').trim();
+    // Parse organization (English or French)
+    if (n.startsWith('- **Organization:**') || n.startsWith('- **Organisation:**')) {
+      result.organization = n.replace(/^-\s*\*\*(Organization|Organisation):\*\*\s*/, '').trim();
     }
 
     // Parse board name
-    if (line.startsWith('- **Board:**')) {
-      result.board = line.replace('- **Board:**', '').trim();
+    if (n.startsWith('- **Board:**')) {
+      result.board = n.replace('- **Board:**', '').trim();
     }
 
     // Parse lists
-    if (line === '## Lists (in order)' || line === '## Lists') {
+    if (line === '## Lists (in order)' || line === '## Lists' || line === '## Listes') {
       currentSection = 'lists';
       continue;
     }
 
     if (currentSection === 'lists' && /^\d+\./.test(line)) {
-      const listMatch = line.match(/^\d+\.\s+\*\*(.+?)\*\*\s*-\s*(.+)/);
+      // Support both "- " and "—" as separator
+      const listMatch = line.match(/^\d+\.\s+\*\*(.+?)\*\*\s*[-—]\s*(.+)/);
       if (listMatch) {
         result.lists.push({
           name: listMatch[1],
           description: listMatch[2]
         });
+      } else {
+        // List with no description
+        const listMatchSimple = line.match(/^\d+\.\s+\*\*(.+?)\*\*/);
+        if (listMatchSimple) {
+          result.lists.push({ name: listMatchSimple[1], description: '' });
+        }
       }
     }
 
@@ -274,23 +285,34 @@ function parseMarkdownContent(content) {
     }
 
     if (currentSection === 'labels' && line.startsWith('- ')) {
-      // Handle labels with or without emojis
-      const labelMatch = line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*\s*\((.+?)\)/);
+      // Support both "(description)" and "— description" formats, with or without emojis
+      const labelMatch =
+        line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*\s*\((.+?)\)/) ||
+        line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*\s*[-—]\s*(.+)/);
       if (labelMatch) {
         result.labels.push({
           name: labelMatch[1].trim(),
           description: labelMatch[2].trim()
         });
+      } else {
+        // Label with no description
+        const labelSimple = line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*/);
+        if (labelSimple) {
+          result.labels.push({ name: labelSimple[1].trim(), description: '' });
+        }
       }
     }
 
-    // Parse cards
-    if (line.startsWith('### Card:')) {
+    // Parse cards — support "### Card: title" and "## Carte N : title"
+    const cardHeaderMatch =
+      line.match(/^###\s+Card:\s*"?(.+?)"?\s*$/) ||
+      line.match(/^##\s+Carte\s+\d+\s*:\s*(.+?)\s*$/);
+    if (cardHeaderMatch) {
       if (currentCard && currentCard.title) {
         result.cards.push(currentCard);
       }
       currentCard = {
-        title: line.replace('### Card:', '').replace(/"/g, '').trim(),
+        title: cardHeaderMatch[1].replace(/"/g, '').trim(),
         list: null,
         labels: [],
         assignee: null,
@@ -304,52 +326,54 @@ function parseMarkdownContent(content) {
     }
 
     if (currentCard) {
-      // Parse list assignment
-      if (line.startsWith('**List:**')) {
-        currentCard.list = line.replace('**List:**', '').trim();
+      // Parse list assignment (English or French)
+      if (n.startsWith('**List:**') || n.startsWith('**Liste:**')) {
+        currentCard.list = n.replace(/^\*\*(List|Liste):\*\*\s*/, '').trim();
         currentSection = 'card';
       }
 
       // Parse labels
-      if (line.startsWith('**Labels:**')) {
-        const labelsText = line.replace('**Labels:**', '').trim();
-        // Split by comma and clean up
+      if (n.startsWith('**Labels:**')) {
+        const labelsText = n.replace('**Labels:**', '').trim();
         const labelNames = labelsText.split(',').map(l => l.trim()).filter(l => l);
         currentCard.labels = labelNames.map(name => {
-          // Remove emoji if present (for backward compatibility)
           const cleanName = name.replace(/^[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+/, '').trim();
-          return {
-            name: cleanName
-          };
+          return { name: cleanName };
         });
         currentSection = 'card';
       }
 
       // Parse assignee
-      if (line.startsWith('**Assignee:**')) {
-        currentCard.assignee = line.replace('**Assignee:**', '').trim();
+      if (n.startsWith('**Assignee:**')) {
+        currentCard.assignee = n.replace('**Assignee:**', '').trim();
         currentSection = 'card';
       }
 
-      // Parse due date
-      if (line.startsWith('**Due Date:**')) {
-        currentCard.dueDate = line.replace('**Due Date:**', '').trim();
+      // Parse due date (English or French)
+      if (n.startsWith('**Due Date:**') || n.startsWith('**Échéance:**') || n.startsWith('**Echeance:**')) {
+        currentCard.dueDate = n.replace(/^\*\*(Due Date|Échéance|Echeance):\*\*\s*/, '').trim();
         currentSection = 'card';
       }
 
-      // Parse description
-      if (line.startsWith('**Description:**')) {
+      // Parse description (English or French)
+      if (n.startsWith('**Description:**')) {
         currentSection = 'description';
         continue;
       }
 
-      if (currentSection === 'description' && line && !line.startsWith('**') && !line.startsWith('-') && !line.startsWith('##')) {
-        if (currentCard.description) currentCard.description += '\n';
-        currentCard.description += line;
+      if (currentSection === 'description' && line && !line.startsWith('**') && !line.startsWith('##')) {
+        // Allow "-" lines in description (file paths etc.), but stop on checklist markers
+        if (line.startsWith('- [')) {
+          // This is a checklist item, handled below — fall through
+        } else {
+          if (currentCard.description) currentCard.description += '\n';
+          currentCard.description += line;
+          continue;
+        }
       }
 
-      // Parse checklist
-      if (line === '**Checklist:**') {
+      // Parse checklist (English or French)
+      if (n === '**Checklist:**') {
         currentSection = 'checklist';
         continue;
       }
@@ -362,18 +386,18 @@ function parseMarkdownContent(content) {
         });
       }
 
-      // Parse acceptance criteria
-      if (line === '**Acceptance Criteria:**') {
+      // Parse acceptance criteria (English or French)
+      if (n === "**Acceptance Criteria:**" || n === "**Critères d'acceptation:**" || n === "**Criteres d'acceptation:**") {
         currentSection = 'acceptance';
         continue;
       }
 
       if (currentSection === 'acceptance' && line.startsWith('- ')) {
-        currentCard.acceptanceCriteria.push(line.replace('- ', '').trim());
+        currentCard.acceptanceCriteria.push(line.replace(/^-\s*/, '').trim());
       }
 
-      // Reset section on new headers (but not card headers)
-      if (line.startsWith('##') && !line.startsWith('### Card:')) {
+      // Reset section on new card headers
+      if (cardHeaderMatch) {
         currentSection = null;
       }
 
