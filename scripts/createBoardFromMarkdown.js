@@ -259,12 +259,12 @@ function parseMarkdownFile(filePath) {
     }
 
     // Parse cards
-    if (line.startsWith('### Card:')) {
+    if (line.startsWith('### Card:') || line.startsWith('### Carte :') || line.startsWith('### Carte:')) {
       if (currentCard) {
         result.cards.push(currentCard);
       }
       currentCard = {
-        title: line.replace('### Card:', '').replace(/"/g, '').trim(),
+        title: line.replace(/### (Card|Carte)\s*:/, '').replace(/"/g, '').trim(),
         list: null,
         labels: [],
         assignee: null,

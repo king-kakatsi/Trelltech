@@ -303,10 +303,10 @@ function parseMarkdownContent(content) {
       }
     }
 
-    // Parse cards — support "### Card: title" and "## Carte N : title"
+    // Parse cards — support "### Card: title" and "### Carte : title" and "## Carte N : title"
     const cardHeaderMatch =
-      line.match(/^###\s+Card:\s*"?(.+?)"?\s*$/) ||
-      line.match(/^##\s+Carte\s+[\d]+[a-zA-Z]?\s*:\s*(.+?)\s*$/);
+      line.match(/^###\s+(?:Card|Carte)\s*:\s*"?(.+?)"?\s*$/) ||
+      line.match(/^##\s+Carte\s+[\d]*[a-zA-Z]?\s*:\s*(.+?)\s*$/);
     if (cardHeaderMatch) {
       if (currentCard && currentCard.title) {
         result.cards.push(currentCard);
@@ -451,9 +451,12 @@ function getLabelColor(emoji) {
  * @param {string} orgName - Organization name
  * @returns {Promise<string>} Organization ID
  */
-async function findOrganization(orgName) {
+async function findOrCreateOrganization(orgName) {
   try {
-    const [success, workspaces] = await getAllWorkspaces();
+    const res = await getAllWorkspaces();
+    const success = res[0];
+    const workspaces = res[1];
+    
     if (success && workspaces) {
       const existing = workspaces.find(ws => 
         ws.displayName?.toLowerCase() === orgName.toLowerCase() || 
@@ -465,9 +468,12 @@ async function findOrganization(orgName) {
       }
     }
 
-    throw new Error(`Organization "${orgName}" not found. Please create it first or check the name.`);
+    console.log(`Creating organization: ${orgName}`);
+    const newOrg = await postWorkspace(orgName);
+    console.log(`✓ Created organization: ${orgName} (${newOrg.id})`);
+    return newOrg.id;
   } catch (error) {
-    console.error('Error finding organization:', error);
+    console.error('Error finding/creating organization:', error);
     throw error;
   }
 }
@@ -478,7 +484,7 @@ async function findOrganization(orgName) {
  * @param {string} boardName - Board name
  * @returns {Promise<object>} Board object
  */
-async function findBoard(orgId, boardName) {
+async function findOrCreateBoard(orgId, boardName) {
   try {
     const boards = await getWorkspaceBoards(orgId);
     const existing = boards.find(board => 
@@ -490,9 +496,16 @@ async function findBoard(orgId, boardName) {
       return existing;
     }
 
-    throw new Error(`Board "${boardName}" not found in organization. Please create it first or check the name.`);
+    console.log(`Creating board: ${boardName}`);
+    const board = await createBoard(orgId, {
+      name: boardName,
+      desc: `Auto-generated from markdown board configuration`,
+      template: 'blank'
+    });
+    console.log(`✓ Created board: ${boardName} (${board.id})`);
+    return board;
   } catch (error) {
-    console.error('Error finding board:', error);
+    console.error('Error finding/creating board:', error);
     throw error;
   }
 }
@@ -838,12 +851,12 @@ export async function createBoardFromMarkdown(markdownContent) {
     console.log(`  - Labels: ${boardStructure.labels.length}`);
     console.log(`  - Cards: ${boardStructure.cards.length}\n`);
 
-    // Find existing organization
-    const orgId = await findOrganization(boardStructure.organization);
+    // Find or create organization
+    const orgId = await findOrCreateOrganization(boardStructure.organization);
     
-    // Find existing board
-    console.log(`\nFinding board: ${boardStructure.board}`);
-    const board = await findBoard(orgId, boardStructure.board);
+    // Find or create board
+    console.log(`\nFinding/Creating board: ${boardStructure.board}`);
+    const board = await findOrCreateBoard(orgId, boardStructure.board);
     console.log(`✓ Using board: ${board.name} (${board.id})\n`);
 
     // Find existing lists (create missing ones if needed)
