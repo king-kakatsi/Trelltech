@@ -53,3 +53,4 @@ _temp.md
 *.file.md
 *.env
 Trash
+.hidden/
