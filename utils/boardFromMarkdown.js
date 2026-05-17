@@ -18,6 +18,31 @@ import { TRELLO_CONFIG } from './constants';
 import { fetchFromLocalStorage } from '../services/localStorageService';
 import { postWithApi, getFromApi, updateWithApi } from '../services/axiosService';
 
+// %%%%%%%% RETRY HELPER %%%%%%%
+
+/**
+ * Retry an async fn up to maxAttempts times with exponential back-off.
+ * Waits baseMs, 2×baseMs, 4×baseMs … between attempts.
+ */
+async function withRetry(fn, maxAttempts = 3, baseMs = 1000) {
+  let lastErr;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < maxAttempts) {
+        const wait = baseMs * Math.pow(2, attempt - 1);
+        console.warn(`  ↺ Attempt ${attempt} failed (${err.message}), retrying in ${wait}ms…`);
+        await new Promise((r) => setTimeout(r, wait));
+      }
+    }
+  }
+  throw lastErr;
+}
+
+// %%%%%%%% END - RETRY HELPER %%%%%%%
+
 // %%%%%%%% HELPER FUNCTIONS %%%%%%%
 
 /**
@@ -50,19 +75,16 @@ async function createLabel(boardId, name, color = 'blue') {
  * @returns {Promise<boolean>} Success status
  */
 async function addLabelToCard(cardId, labelId) {
-  try {
+  return withRetry(async () => {
     const token = await fetchFromLocalStorage('trello_token');
     if (!token) throw new Error('No token found');
 
     const endpoint = `/cards/${cardId}/idLabels?key=${TRELLO_CONFIG.API_KEY}&token=${token}&value=${labelId}`;
     const [success, data] = await postWithApi(endpoint);
 
-    if (!success) throw data;
+    if (!success) throw new Error(data?.message || 'addLabelToCard failed');
     return true;
-  } catch (error) {
-    console.error(`Error adding label to card:`, error);
-    throw error;
-  }
+  });
 }
 
 /**
@@ -95,19 +117,17 @@ async function createChecklist(cardId, name) {
  * @returns {Promise<object>} Created checklist item
  */
 async function addChecklistItem(checklistId, name, checked = false) {
-  try {
+  const cleanName = stripMarkdown(name);
+  return withRetry(async () => {
     const token = await fetchFromLocalStorage('trello_token');
     if (!token) throw new Error('No token found');
 
-    const endpoint = `/checklists/${checklistId}/checkItems?key=${TRELLO_CONFIG.API_KEY}&token=${token}&name=${encodeURIComponent(name)}&checked=${checked}`;
+    const endpoint = `/checklists/${checklistId}/checkItems?key=${TRELLO_CONFIG.API_KEY}&token=${token}&name=${encodeURIComponent(cleanName)}&checked=${checked}`;
     const [success, data] = await postWithApi(endpoint);
 
-    if (!success) throw data;
+    if (!success) throw new Error(data?.message || 'addChecklistItem failed');
     return data;
-  } catch (error) {
-    console.error(`Error adding checklist item:`, error);
-    throw error;
-  }
+  });
 }
 
 /**
@@ -285,20 +305,28 @@ function parseMarkdownContent(content) {
     }
 
     if (currentSection === 'labels' && line.startsWith('- ')) {
-      // Support both "(description)" and "— description" formats, with or without emojis
-      const labelMatch =
-        line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*\s*\((.+?)\)/) ||
-        line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*\s*[-—]\s*(.+)/);
-      if (labelMatch) {
+      // Format: - **Name** — `color` — description  (BUSGO style)
+      const withBacktickColor = line.match(
+        /^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*\s*[-—]\s*`(.+?)`/
+      );
+      if (withBacktickColor) {
         result.labels.push({
-          name: labelMatch[1].trim(),
-          description: labelMatch[2].trim()
+          name: withBacktickColor[1].trim(),
+          color: withBacktickColor[2].trim(),
+          description: '',
         });
       } else {
-        // Label with no description
-        const labelSimple = line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*/);
-        if (labelSimple) {
-          result.labels.push({ name: labelSimple[1].trim(), description: '' });
+        // Format: - **Name** (description)  or  - **Name** — description
+        const labelMatch =
+          line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*\s*\((.+?)\)/) ||
+          line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*\s*[-—]\s*(.+)/);
+        if (labelMatch) {
+          result.labels.push({ name: labelMatch[1].trim(), color: null, description: labelMatch[2].trim() });
+        } else {
+          const labelSimple = line.match(/^-\s*(?:[🔴🟠🟡🔵🟢🟣⚪🐛📝🔧⚡]\s+)?\*\*(.+?)\*\*/);
+          if (labelSimple) {
+            result.labels.push({ name: labelSimple[1].trim(), color: null, description: '' });
+          }
         }
       }
     }
@@ -425,25 +453,31 @@ function parseMarkdownContent(content) {
 // %%%%%%%% MAIN CREATION FUNCTIONS %%%%%%%
 
 /**
- * Map emoji to Trello label color
- * @param {string} emoji - Emoji character
- * @returns {string} Trello color name
+ * Map an emoji or French color name to a Trello-accepted color string.
+ * Trello valid colors: yellow, purple, blue, red, green, orange, black, sky, pink, lime
  */
-function getLabelColor(emoji) {
-  const colorMap = {
-    '🔴': 'red',
-    '🟠': 'orange',
-    '🟡': 'yellow',
-    '🟢': 'green',
-    '🔵': 'blue',
-    '🟣': 'purple',
-    '⚪': 'black',
-    '🐛': 'red',
-    '📝': 'blue',
-    '🔧': 'orange',
-    '⚡': 'yellow'
+function getLabelColor(hint) {
+  const emojiMap = {
+    '🔴': 'red', '🟠': 'orange', '🟡': 'yellow', '🟢': 'green',
+    '🔵': 'blue', '🟣': 'purple', '⚪': 'black',
+    '🐛': 'red', '📝': 'blue', '🔧': 'orange', '⚡': 'yellow',
   };
-  return colorMap[emoji] || 'blue';
+  const frenchMap = {
+    vert: 'green', bleu: 'blue', rouge: 'red', jaune: 'yellow',
+    orange: 'orange', violet: 'purple', turquoise: 'green',
+    cyan: 'sky', rose: 'pink', lime: 'lime', magenta: 'pink',
+    sky: 'sky', noir: 'black', blanc: null,
+  };
+  return emojiMap[hint] || frenchMap[hint?.toLowerCase()] || 'blue';
+}
+
+/** Strip markdown inline formatting (backticks, bold, italic) from text sent to Trello. */
+function stripMarkdown(text) {
+  return text
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .trim();
 }
 
 /**
@@ -584,11 +618,11 @@ async function findOrCreateLabels(boardId, labels) {
     for (const label of labels) {
       if (!labelMap.has(label.name)) {
         try {
-          const color = getLabelColor(label.name);
+          const color = getLabelColor(label.color || label.name);
           const createdLabel = await createLabel(boardId, label.name, color);
           labelMap.set(label.name, createdLabel.id);
-          console.log(`  ✓ Created label: ${label.name}`);
-          await new Promise(resolve => setTimeout(resolve, 200));
+          console.log(`  ✓ Created label: ${label.name} (${color})`);
+          await new Promise(resolve => setTimeout(resolve, 400));
         } catch (error) {
           console.error(`  ✗ Failed to create label ${label.name}:`, error);
         }
@@ -639,7 +673,7 @@ async function updateExistingCard(card, cardDef, labelMap, members) {
         try {
           await addLabelToCard(card.id, labelId);
           console.log(`    ✓ Added label: ${labelDef.name}`);
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 250));
         } catch (error) {
           console.error(`    ✗ Failed to add label ${labelDef.name}`);
         }
@@ -689,7 +723,7 @@ async function updateExistingCard(card, cardDef, labelMap, members) {
           if (!existingItemNames.has(item.name.trim().toLowerCase())) {
             await addChecklistItem(checklist.id, item.name, item.checked);
             addedItems++;
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 250));
           }
         }
 
@@ -763,7 +797,7 @@ async function createAllCards(boardId, listMap, labelMap, members, cards) {
           if (labelId) {
             try {
               await addLabelToCard(card.id, labelId);
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise(resolve => setTimeout(resolve, 250));
             } catch (error) {
               console.error(`    ✗ Failed to add label ${labelDef.name} to card`);
             }
@@ -772,17 +806,17 @@ async function createAllCards(boardId, listMap, labelMap, members, cards) {
 
         // Add assignee (if specified and member exists)
         if (cardDef.assignee && cardDef.assignee !== 'You') {
-          const member = members.find(m => 
+          const member = members.find(m =>
             m.username?.toLowerCase() === cardDef.assignee.toLowerCase() ||
             m.fullName?.toLowerCase() === cardDef.assignee.toLowerCase() ||
             m.username?.toLowerCase().includes(cardDef.assignee.toLowerCase())
           );
-          
+
           if (member) {
             try {
               await addMember('card', card.id, member.id);
               console.log(`    ✓ Assigned to: ${member.fullName || member.username}`);
-              await new Promise(resolve => setTimeout(resolve, 200));
+              await new Promise(resolve => setTimeout(resolve, 300));
             } catch (error) {
               console.error(`    ✗ Failed to assign member`);
             }
@@ -794,10 +828,10 @@ async function createAllCards(boardId, listMap, labelMap, members, cards) {
           try {
             const checklist = await createChecklist(card.id, 'Checklist');
             console.log(`    ✓ Created checklist with ${cardDef.checklist.length} items`);
-            
+
             for (const item of cardDef.checklist) {
               await addChecklistItem(checklist.id, item.name, item.checked);
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise(resolve => setTimeout(resolve, 250));
             }
           } catch (error) {
             console.error(`    ✗ Failed to create checklist`);
@@ -806,7 +840,7 @@ async function createAllCards(boardId, listMap, labelMap, members, cards) {
       }
 
       // Delay between cards to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 800));
     } catch (error) {
       console.error(`  ✗ Failed to process card "${cardDef.title}":`, error);
       skippedCount++;
@@ -893,6 +927,77 @@ export async function createBoardFromMarkdown(markdownContent) {
 }
 
 // %%%%%%%% END - MAIN FUNCTION %%%%%%%
+
+// %%%%%%%% LABEL CLEANUP FUNCTION %%%%%%%
+
+/**
+ * Delete all labels on a board whose names match those defined in the provided
+ * markdown content.  Labels that exist on the board but are NOT in the markdown
+ * are left untouched.
+ *
+ * @param {string} markdownContent - Content of BUSGO_TRELLO.md
+ * @returns {Promise<{success: boolean, deleted: string[], kept: string[], error?: string}>}
+ */
+export async function deleteMarkdownLabelsFromBoard(markdownContent) {
+  try {
+    if (!markdownContent || typeof markdownContent !== 'string') {
+      throw new Error('markdownContent is required');
+    }
+
+    const { organization: orgName, board: boardName, labels: mdLabels } =
+      parseMarkdownContent(markdownContent);
+
+    const mdLabelNames = new Set(mdLabels.map((l) => l.name.trim().toLowerCase()));
+
+    console.log(
+      `🗑️  Will delete labels matching: ${[...mdLabelNames].join(', ')}`
+    );
+
+    // Resolve org → board
+    const orgId = await findOrCreateOrganization(orgName);
+    const board = await findOrCreateBoard(orgId, boardName);
+
+    // Fetch all labels currently on the board
+    const token = await fetchFromLocalStorage('trello_token');
+    if (!token) throw new Error('No Trello token found – please log in first');
+
+    const endpoint = `/boards/${board.id}/labels?key=${TRELLO_CONFIG.API_KEY}&token=${token}&limit=1000`;
+    const [ok, boardLabels] = await getFromApi(endpoint);
+    if (!ok) throw new Error('Failed to fetch board labels');
+
+    const deleted = [];
+    const kept = [];
+
+    for (const label of boardLabels) {
+      const nameLower = (label.name || '').trim().toLowerCase();
+      if (mdLabelNames.has(nameLower)) {
+        // Use fetch() directly — Axios adds Content-Type: application/json which
+        // triggers a CORS preflight on DELETE that causes 30s timeouts.
+        // A plain fetch DELETE with no custom headers is a "simple" CORS request.
+        const url = `https://api.trello.com/1/labels/${label.id}?key=${TRELLO_CONFIG.API_KEY}&token=${token}`;
+        const response = await fetch(url, { method: 'DELETE' });
+        if (response.ok) {
+          deleted.push(label.name);
+          console.log(`  ✓ Deleted label: ${label.name}`);
+        } else {
+          console.warn(`  ✗ Could not delete label: ${label.name} (${response.status})`);
+        }
+        await new Promise((r) => setTimeout(r, 300));
+      } else {
+        kept.push(label.name || '(unnamed)');
+        console.log(`  — Kept label: ${label.name || '(unnamed)'}`);
+      }
+    }
+
+    console.log(`\n✅ Done – deleted ${deleted.length}, kept ${kept.length}`);
+    return { success: true, deleted, kept };
+  } catch (error) {
+    console.error('❌ deleteMarkdownLabelsFromBoard:', error);
+    return { success: false, deleted: [], kept: [], error: error.message };
+  }
+}
+
+// %%%%%%%% END - LABEL CLEANUP FUNCTION %%%%%%%
 
 export { parseMarkdownContent };
 

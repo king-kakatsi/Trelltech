@@ -5,17 +5,58 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, Alert, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, Alert, TextInput, Platform } from 'react-native';
 import { Clipboard } from 'react-native';
-import { createBoardFromMarkdown } from '../utils/boardFromMarkdown';
+import { createBoardFromMarkdown, deleteMarkdownLabelsFromBoard } from '../utils/boardFromMarkdown';
 import { TRELLO_PLANNING_PROMPT } from '../utils/getPlanningPrompt';
 
 // %%%%%%%% CREATE BOARD SCREEN %%%%%%%
 
 export default function CreateBoardScreen() {
   const [loading, setLoading] = useState(false);
+  const [cleanLoading, setCleanLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [markdownContent, setMarkdownContent] = useState('');
+
+  const handleCleanLabels = async () => {
+    if (!markdownContent.trim()) {
+      Alert.alert('Markdown Required', 'Paste the board markdown first so we know which labels to delete.');
+      return;
+    }
+
+    // Alert.alert button callbacks are broken on web — use window.confirm there
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm('Delete all BUSGO labels from the Bus_go board?\nManually-created labels will be kept.')
+      : await new Promise((resolve) => {
+          Alert.alert(
+            'Delete BUSGO Labels',
+            'This will delete every label on the Bus_go board whose name matches the markdown. Manually-created labels will be kept. Continue?',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+            ]
+          );
+        });
+
+    if (!confirmed) return;
+
+    setCleanLoading(true);
+    try {
+      const res = await deleteMarkdownLabelsFromBoard(markdownContent);
+      if (res.success) {
+        Alert.alert(
+          'Done',
+          `Deleted ${res.deleted.length} label(s): ${res.deleted.join(', ') || 'none'}\n\nKept ${res.kept.length} label(s) untouched.`
+        );
+      } else {
+        Alert.alert('Error', res.error || 'Failed to delete labels');
+      }
+    } catch (err) {
+      Alert.alert('Error', err.message);
+    } finally {
+      setCleanLoading(false);
+    }
+  };
 
   const handleCreateBoard = async () => {
     if (!markdownContent.trim()) {
@@ -105,6 +146,25 @@ export default function CreateBoardScreen() {
           className="bg-gray-700 text-white p-3 rounded-lg mb-4"
           style={{ minHeight: 200, textAlignVertical: 'top' }}
         />
+
+        <TouchableOpacity
+          onPress={handleCleanLabels}
+          disabled={cleanLoading || loading || !markdownContent.trim()}
+          className={`bg-red-700 rounded-lg p-4 items-center mb-3 ${
+            cleanLoading || loading || !markdownContent.trim() ? 'opacity-50' : ''
+          }`}
+        >
+          {cleanLoading ? (
+            <View className="flex-row items-center">
+              <ActivityIndicator color="white" className="mr-2" />
+              <Text className="text-white font-semibold">Deleting labels...</Text>
+            </View>
+          ) : (
+            <Text className="text-white font-semibold text-lg">
+              Delete BUSGO Labels from Board
+            </Text>
+          )}
+        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={handleCreateBoard}
