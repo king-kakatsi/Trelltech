@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { addMember, getAvailableMembers, getCurrentMembers, removeMember } from '../../services/memberService';
-import { getMemberColor, getMemberInitials } from '../../utils/memberColors';
+import MemberAvatar from './MemberAvatar';
 import BottomDrawer from './BottomDrawer';
 
 export default function AddMembersDrawer({ 
@@ -19,24 +19,19 @@ export default function AddMembersDrawer({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      fetchMembers();
-    } else {
-      setSearchQuery('');
-    }
-  }, [visible, instanceId, instanceType]);
-
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
-      const [available, current] = await Promise.all([
+      const [availableResponse, currentResponse] = await Promise.all([
         getAvailableMembers(instanceType, instanceId),
         getCurrentMembers(instanceType, instanceId)
       ]);
 
+      const available = availableResponse.success ? availableResponse.data : [];
+      const current = currentResponse.success ? currentResponse.data : [];
+
       setAvailableMembers(available);
-      
+
       const currentIds = new Set(current.map(m => m.id));
       setCurrentMemberIds(currentIds);
       setSelectedMemberIds(new Set(currentIds));
@@ -46,7 +41,15 @@ export default function AddMembersDrawer({
     } finally {
       setLoading(false);
     }
-  };
+  }, [instanceType, instanceId]);
+
+  useEffect(() => {
+    if (visible) {
+      fetchMembers();
+    } else {
+      setSearchQuery('');
+    }
+  }, [visible, fetchMembers]);
 
   const toggleMember = (memberId) => {
     const newSelected = new Set(selectedMemberIds);
@@ -64,20 +67,23 @@ export default function AddMembersDrawer({
       const membersToAdd = [...selectedMemberIds].filter(id => !currentMemberIds.has(id));
       const membersToRemove = [...currentMemberIds].filter(id => !selectedMemberIds.has(id));
 
-      const addPromises = membersToAdd.map(memberId => 
-        addMember(instanceType, instanceId, memberId)
+      const addResults = await Promise.all(
+        membersToAdd.map(memberId => addMember(instanceType, instanceId, memberId))
       );
-      
-      const removePromises = membersToRemove.map(memberId => 
-        removeMember(instanceType, instanceId, memberId)
+      const removeResults = await Promise.all(
+        membersToRemove.map(memberId => removeMember(instanceType, instanceId, memberId))
       );
 
-      await Promise.all([...addPromises, ...removePromises]);
+      const failed = [...addResults, ...removeResults].filter(result => !result.success);
+      if (failed.length > 0) {
+        Alert.alert('Error', failed[0].error || 'Failed to update some members.');
+        return;
+      }
 
       if (onMembersUpdated) {
         onMembersUpdated();
       }
-      
+
       onClose();
     } catch (error) {
       console.error('Error updating members:', error);
@@ -164,8 +170,6 @@ export default function AddMembersDrawer({
           >
             {filteredMembers.map((member) => {
               const isSelected = selectedMemberIds.has(member.id);
-              const memberColor = getMemberColor(member.id);
-              const initials = member.initials || getMemberInitials(member.fullName);
 
               return (
                 <Pressable
@@ -173,13 +177,8 @@ export default function AddMembersDrawer({
                   onPress={() => toggleMember(member.id)}
                   className="flex-row items-center py-3 px-2 active:bg-neutral-800 rounded-lg"
                 >
-                  <View 
-                    style={{ backgroundColor: memberColor }}
-                    className="w-10 h-10 rounded-full items-center justify-center mr-3"
-                  >
-                    <Text className="text-white text-sm font-bold">
-                      {initials}
-                    </Text>
+                  <View className="mr-3">
+                    <MemberAvatar member={member} size={40} textStyle="text-sm" />
                   </View>
 
                   <View className="flex-1">

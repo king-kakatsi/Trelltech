@@ -15,13 +15,19 @@ export default function KanbanView({ workspaceId, boardId, listId, onOpenMenu })
 
   useEffect(() => {
     const fetchList = async () => {
-      const listData = await getList(listId);
-      setList(listData);
+      const response = await getList(listId);
+      if (response.success) {
+        setList(response.data);
+      }
     };
 
     const fetchCards = async () => {
-      const cardsData = await getCardsInList(listId);
-      setCards(cardsData);
+      const response = await getCardsInList(listId);
+      if (response.success) {
+        setCards(Array.isArray(response.data) ? response.data : []);
+      } else {
+        setCards([]);
+      }
     };
 
     fetchList();
@@ -30,8 +36,13 @@ export default function KanbanView({ workspaceId, boardId, listId, onOpenMenu })
 
   const handleAddCard = async () => {
     if (newCardName && newCardDesc) {
-      const cardData = await createCard(listId, newCardName, newCardDesc);
-      setCards((prevCards) => [...prevCards, cardData]);
+      const response = await createCard(listId, {
+        name: newCardName,
+        description: newCardDesc,
+      });
+      if (response.success) {
+        setCards((prevCards) => [...prevCards, response.data]);
+      }
       setShowForm(false);
       setNewCardName('');
       setNewCardDesc('');
@@ -63,9 +74,9 @@ export default function KanbanView({ workspaceId, boardId, listId, onOpenMenu })
           showsVerticalScrollIndicator={true}
           nestedScrollEnabled={true}
         >
-          {cards.map((card) => (
+          {Array.isArray(cards) ? cards.map((card) => (
             <TaskCard key={card.id} card={card} listId={listId} workspaceId={workspaceId} boardId={boardId} />
-          ))}
+          )) : null}
         </ScrollView>
       </View>
 

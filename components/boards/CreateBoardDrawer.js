@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import BottomDrawer from '../ui/BottomDrawer';
-import { BOARD_TEMPLATES } from '../../utils/boardTemplates';
+import FormActions from '../ui/FormActions';
+import { BOARD_TEMPLATES, getDefaultTemplate } from '../../utils/boardTemplates';
 
 export default function CreateBoardDrawer({
   visible,
@@ -14,7 +15,7 @@ export default function CreateBoardDrawer({
   onClose,
   onCreate
 }) {
-  const [selectedTemplate, setSelectedTemplate] = useState('blank');
+  const [selectedTemplate, setSelectedTemplate] = useState(getDefaultTemplate().id);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   const handleCreate = () => {
@@ -123,31 +124,13 @@ export default function CreateBoardDrawer({
           )}
         </View>
 
-        <View className="flex-row gap-3 pb-4">
-          <Pressable
-            onPress={onClose}
-            disabled={creating}
-            className="flex-1 bg-[#1a1a1a] py-4 rounded-xl active:opacity-70"
-          >
-            <Text className="text-white text-center font-semibold text-base">
-              Cancel
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={handleCreate}
-            disabled={creating || !boardName.trim()}
-            className={`flex-1 py-4 rounded-xl ${
-              creating || !boardName.trim() ? 'bg-gray-700' : 'bg-white'
-            }`}
-          >
-            <Text className={`text-center font-semibold text-base ${
-              creating || !boardName.trim() ? 'text-gray-500' : 'text-gray-900'
-            }`}>
-              {creating ? 'Creating...' : 'Create'}
-            </Text>
-          </Pressable>
-        </View>
+        <FormActions
+          onCancel={onClose}
+          onSubmit={handleCreate}
+          submitLabel="Create"
+          loading={creating}
+          disabled={!boardName.trim()}
+        />
       </ScrollView>
     </BottomDrawer>
   );

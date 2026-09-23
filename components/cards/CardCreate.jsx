@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { createCard } from '../../services/trello';
-import { useAuth } from '../../contexts/AuthContext';
+import { createCard } from '../../services/cards';
 
 export default function CardCreate({ listId, onSuccess }) {
-  const { token } = useAuth();
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,11 +14,13 @@ export default function CardCreate({ listId, onSuccess }) {
     }
     setLoading(true);
     try {
-      const newCard = await createCard(listId, token, { name: name.trim(), desc: desc.trim() });
-      if (newCard) {
-        onSuccess?.(newCard);
+      const response = await createCard(listId, { name: name.trim(), description: desc.trim() });
+      if (response.success) {
+        onSuccess?.(response.data);
         setName('');
         setDesc('');
+      } else {
+        Alert.alert('Error', response.error || 'Failed to create card');
       }
     } catch (error) {
       console.error('Error creating card:', error);

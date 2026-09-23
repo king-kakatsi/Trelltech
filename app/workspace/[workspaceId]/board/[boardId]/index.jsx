@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BoardDetailHeader from '../../../../../components/boardDetail/BoardDetailHeader';
@@ -12,36 +12,39 @@ import EmptyListsState from '../../../../../components/boardDetail/EmptyListsSta
 import ListCarousel from '../../../../../components/boardDetail/ListCarousel';
 import ListMenuDrawer from '../../../../../components/boardDetail/ListMenuDrawer';
 import AddMembersDrawer from '../../../../../components/ui/AddMembersDrawer';
+import { required } from '../../../../../lib/validation';
 import {
   archiveBoard,
-  archiveList,
-  createList,
-  getBoardDetails,
-  getBoardLists,
+  getBoard,
   getBoardMembers,
   updateBoardDescription,
   updateBoardName,
-  updateList
 } from '../../../../../services/boardService';
+import {
+  archiveList,
+  createList,
+  getBoardLists,
+  updateList,
+} from '../../../../../services/list';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function BoardDetailScreen() {
   const { workspaceId, boardId } = useLocalSearchParams();
-  
+
   const [board, setBoard] = useState(null);
   const [lists, setLists] = useState([]);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
-  
+
   const [isCreateDrawerVisible, setCreateDrawerVisible] = useState(false);
   const [isBoardMenuVisible, setBoardMenuVisible] = useState(false);
   const [isEditBoardVisible, setEditBoardVisible] = useState(false);
   const [isListMenuVisible, setListMenuVisible] = useState(false);
   const [isEditListVisible, setEditListVisible] = useState(false);
   const [isMembersDrawerVisible, setMembersDrawerVisible] = useState(false);
-  
+
   const [newListName, setNewListName] = useState('');
   const [editedBoardName, setEditedBoardName] = useState('');
   const [editedBoardDesc, setEditedBoardDesc] = useState('');
@@ -49,64 +52,70 @@ export default function BoardDetailScreen() {
   const [selectedList, setSelectedList] = useState(null);
   const [creating, setCreating] = useState(false);
 
+  const loadBoardData = useCallback(async () => {
+    if (!boardId) return;
+
+    setLoading(true);
+    const [boardResponse, listsResponse, membersResponse] = await Promise.all([
+      getBoard(boardId),
+      getBoardLists(boardId),
+      getBoardMembers(boardId),
+    ]);
+
+    if (boardResponse.success) setBoard(boardResponse.data);
+    if (listsResponse.success) setLists(listsResponse.data);
+    if (membersResponse.success) setMembers(membersResponse.data);
+
+    if (!boardResponse.success || !listsResponse.success || !membersResponse.success) {
+      Alert.alert('Error', 'Failed to load board data');
+    }
+
+    setLoading(false);
+  }, [boardId]);
+
   useEffect(() => {
     loadBoardData();
-  }, [boardId]);
-  
-  const loadBoardData = async () => {
-    try {
-      setLoading(true);
-      const [boardData, listsData, membersData] = await Promise.all([
-        getBoardDetails(boardId),
-        getBoardLists(boardId),
-        getBoardMembers(boardId)
-      ]);
-      setBoard(boardData);
-      setLists(listsData);
-      setMembers(membersData);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load board data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [loadBoardData]);
 
   const handleCreateList = async () => {
-    if (!newListName.trim()) {
-      Alert.alert('Error', 'List name cannot be empty');
+    const nameCheck = required(newListName, 'List name');
+    if (!nameCheck.valid) {
+      Alert.alert('Error', nameCheck.error);
       return;
     }
 
-    try {
-      setCreating(true);
-      await createList(boardId, newListName.trim());
+    setCreating(true);
+    const response = await createList(boardId, newListName.trim());
+
+    if (response.success) {
       setNewListName('');
       setCreateDrawerVisible(false);
       await loadBoardData();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create list');
-    } finally {
-      setCreating(false);
+    } else {
+      Alert.alert('Error', response.error || 'Failed to create list');
     }
+
+    setCreating(false);
   };
 
   const handleUpdateBoard = async () => {
-    if (!editedBoardName.trim()) {
-      Alert.alert('Error', 'Board name cannot be empty');
+    const nameCheck = required(editedBoardName, 'Board name');
+    if (!nameCheck.valid) {
+      Alert.alert('Error', nameCheck.error);
       return;
     }
 
-    try {
-      await Promise.all([
-        updateBoardName(boardId, editedBoardName.trim()),
-        editedBoardDesc.trim() !== board?.desc 
-          ? updateBoardDescription(boardId, editedBoardDesc.trim())
-          : Promise.resolve()
-      ]);
+    const nameResponse = await updateBoardName(boardId, editedBoardName.trim());
+    const descResponse =
+      editedBoardDesc.trim() !== (board?.desc || '')
+        ? await updateBoardDescription(boardId, editedBoardDesc.trim())
+        : { success: true };
+
+    if (nameResponse.success && descResponse.success) {
       setEditBoardVisible(false);
       await loadBoardData();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update board');
+    } else {
+      Alert.alert('Error', nameResponse.error || descResponse.error || 'Failed to update board');
     }
   };
 
@@ -120,11 +129,11 @@ export default function BoardDetailScreen() {
           text: 'Archive',
           style: 'destructive',
           onPress: async () => {
-            try {
-              await archiveBoard(boardId);
+            const response = await archiveBoard(boardId);
+            if (response.success) {
               router.back();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to archive board');
+            } else {
+              Alert.alert('Error', response.error || 'Failed to archive board');
             }
           },
         },
@@ -133,15 +142,21 @@ export default function BoardDetailScreen() {
   };
 
   const handleUpdateList = async (listId, newName) => {
-    try {
-      await updateList(listId, newName);
+    const nameCheck = required(newName, 'List name');
+    if (!nameCheck.valid) {
+      Alert.alert('Error', nameCheck.error);
+      return;
+    }
+
+    const response = await updateList(listId, { name: newName.trim() });
+    if (response.success) {
       await loadBoardData();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update list');
+    } else {
+      Alert.alert('Error', response.error || 'Failed to update list');
     }
   };
 
-  const handleArchiveList = async (listId) => {
+  const handleArchiveList = (listId) => {
     Alert.alert(
       'Archive List',
       'Are you sure you want to archive this list?',
@@ -151,11 +166,11 @@ export default function BoardDetailScreen() {
           text: 'Archive',
           style: 'destructive',
           onPress: async () => {
-            try {
-              await archiveList(listId);
+            const response = await archiveList(listId);
+            if (response.success) {
               await loadBoardData();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to archive list');
+            } else {
+              Alert.alert('Error', response.error || 'Failed to archive list');
             }
           },
         },
@@ -175,18 +190,10 @@ export default function BoardDetailScreen() {
   };
 
   const handleSaveListEdit = async () => {
-    if (!editedListName.trim()) {
-      Alert.alert('Error', 'List name cannot be empty');
-      return;
-    }
-    
-    try {
-      await handleUpdateList(selectedList.id, editedListName.trim());
-      setEditListVisible(false);
-      setSelectedList(null);
-    } catch (error) {
-      // Error already handled in handleUpdateList
-    }
+    if (!selectedList) return;
+    await handleUpdateList(selectedList.id, editedListName.trim());
+    setEditListVisible(false);
+    setSelectedList(null);
   };
 
   const handleArchiveSelectedList = () => {
@@ -209,12 +216,9 @@ export default function BoardDetailScreen() {
   };
 
   const handleMembersUpdated = async () => {
-    // Refresh members list after changes
-    try {
-      const membersData = await getBoardMembers(boardId);
-      setMembers(membersData);
-    } catch (error) {
-      console.error('Error refreshing members:', error);
+    const response = await getBoardMembers(boardId);
+    if (response.success) {
+      setMembers(response.data);
     }
   };
 
@@ -235,7 +239,6 @@ export default function BoardDetailScreen() {
 
       <BoardDetailHeader
         boardName={board?.name}
-        backgroundColor={backgroundColor}
         onBack={() => router.back()}
         onOpenMenu={() => setBoardMenuVisible(true)}
         onCreateList={() => setCreateDrawerVisible(true)}
@@ -254,7 +257,6 @@ export default function BoardDetailScreen() {
             onIndexChange={setCurrentIndex}
             onOpenListMenu={handleOpenListMenu}
             screenWidth={SCREEN_WIDTH}
-            screenHeight={SCREEN_HEIGHT}
             workspaceId={workspaceId}
             boardId={board?.id}
           />

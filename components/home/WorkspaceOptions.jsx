@@ -38,10 +38,10 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
                 try {
                   const id = selectedAccordionId;
                   // appeler la fonction de suppression
-                  const [success, data] = await deleteWorkspace(id);
-                  
+                  const response = await deleteWorkspace(id);
 
-                  if (!success) {
+
+                  if (response.success) {
                     // suppression OK : fermer menu, réinitialiser sélection et déclencher refresh si fourni
                     Alert.alert('Supprimé', 'Workspace deleted successfully.');
                     setListMenuVisible(false);
@@ -50,8 +50,8 @@ const WorkspaceOptions = ({selectedAccordionId,setSelectedAccordionId, setListMe
                       try { onRefresh(); } catch (e) { console.error('onRefresh callback error', e); }
                     }
                   } else {
-                    console.error('Delete failed:', data);
-                    Alert.alert('Erreur', data?.message || 'Deletion failed.');
+                    console.error('Delete failed:', response.error);
+                    Alert.alert('Erreur', response.error || 'Deletion failed.');
                   }
                 } catch (error) {
                   console.error('Error deleting workspace:', error);

@@ -1,7 +1,5 @@
-import { useRouter } from 'expo-router';
 import { useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { useAuth } from "../../contexts/AuthContext";
 import BottomDrawer from "../ui/BottomDrawer";
 import WorkspaceAccordion from "./WorkspaceAccordion";
 import WorkspaceOptions from './WorkspaceOptions';
@@ -9,8 +7,6 @@ import WorkspaceOptions from './WorkspaceOptions';
 export default function WorkspaceList({ workspaces, loading, refreshing, onRefresh }) {
   const [isListMenuVisible, setListMenuVisible] = useState(false);
   const [selectedAccordionId, setSelectedAccordionId] = useState(null);
-  const { token, user } = useAuth();
-  const router = useRouter();
 
   const selectedWorkspace = workspaces.find(ws => ws.id === selectedAccordionId) ?? null;
 

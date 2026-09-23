@@ -14,7 +14,7 @@ import { Pencil, Zap, LogOut, ChevronRight } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, token, logout } = useAuth();
+  const { user, logout } = useAuth();
 
   const [isDrawerVisible, setDrawerVisible] = useState(false);
   const [editedName, setEditedName] = useState('');
@@ -44,7 +44,7 @@ export default function ProfileScreen() {
     }
     setIsSaving(true);
     try {
-      await updateCurrentUser(token, { fullName: editedName, bio: editedBio });
+      await updateCurrentUser({ fullName: editedName, bio: editedBio });
       setDrawerVisible(false);
       Alert.alert('Saved', 'Profile updated! Restart the app to see changes.');
     } catch {

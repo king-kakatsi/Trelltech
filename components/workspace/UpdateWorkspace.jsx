@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { updateWorkspace } from '../../services/workspaces';
+import { required, validateUrl } from '../../lib/validation';
+import FormActions from '../ui/FormActions';
 
 const UpdateWorkspace = ({ open, workspace = null, onUpdate = () => {}, onClose = () => {} }) => {
-  
   const [workspaceData, setWorkspaceData] = useState({
     displayName: '',
     name: '',
@@ -12,14 +13,19 @@ const UpdateWorkspace = ({ open, workspace = null, onUpdate = () => {}, onClose 
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const setInformation = (field, value) => {
-    setWorkspaceData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const updateField = (field, value) => {
+    setWorkspaceData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Populate form when opened or when workspace changes
+  const resetForm = () => {
+    setWorkspaceData({
+      displayName: '',
+      name: '',
+      description: '',
+      website: ''
+    });
+  };
+
   useEffect(() => {
     if (open && workspace) {
       setWorkspaceData({
@@ -29,81 +35,54 @@ const UpdateWorkspace = ({ open, workspace = null, onUpdate = () => {}, onClose 
         website: workspace.website ?? ''
       });
     } else if (!open) {
-      setWorkspaceData({
-        displayName: '',
-        name: '',
-        description: '',
-        website: ''
-      });
+      resetForm();
     }
   }, [open, workspace]);
 
   const handleClose = () => {
     if (isSubmitting) return;
-    setWorkspaceData({
-      displayName: '',
-      name: '',
-      description: '',
-      website: ''
-    });
+    resetForm();
     onClose();
   };
 
   const handleUpdate = async () => {
-    // validation: displayName requis (harmonisé avec NewWorkspace)
-    if (!workspaceData.displayName.trim()) {
-      Alert.alert('Erreur', 'Th field display name is required');
+    if (!workspace || !workspace.id) {
+      Alert.alert('Error', 'Invalid workspace');
       return;
     }
-    if (!workspace || !workspace.id) {
-      Alert.alert('Erreur', 'Workspace invalide');
+
+    const displayNameCheck = required(workspaceData.displayName, 'Display name');
+    if (!displayNameCheck.valid) {
+      Alert.alert('Error', displayNameCheck.error);
+      return;
+    }
+
+    const websiteCheck = validateUrl(workspaceData.website, 'Website');
+    if (!websiteCheck.valid) {
+      Alert.alert('Error', websiteCheck.error);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Valider website uniquement s'il est renseigné
-      const websiteTrim = workspaceData.website.trim();
-      if (websiteTrim) {
-        try {
-          const parsed = new URL(websiteTrim);
-          if (!['http:', 'https:'].includes(parsed.protocol)) {
-            throw new Error('The website must start with http:// or https://');
-          }
-        } catch (e) {
-          Alert.alert('Erreur', 'The website URL is not valid');
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      // construire le payload similaire à la création
-      const payload = {
+      const response = await updateWorkspace(workspace.id, {
         displayName: workspaceData.displayName.trim(),
-        name: workspaceData.name.trim().toLowerCase(),
-        desc: workspaceData.description.trim(),
-      };
-      if (websiteTrim) payload.website = websiteTrim;
-
-      const res = await updateWorkspace(workspace.id, payload);
-     
-      setWorkspaceData({
-        displayName: '',
-        name: '',
-        description: '',
-        website: ''
+        name: workspaceData.name.trim(),
+        description: workspaceData.description.trim(),
+        website: workspaceData.website.trim(),
       });
-      // fermer d'abord le modal
-      onClose();
-      // appeler le callback parent avec la réponse (et attendre s'il renvoie une Promise)
-      try {
-        await Promise.resolve(onUpdate(res));
-      } catch (cbErr) {
-        console.error('onUpdate callback error:', cbErr);
+
+      if (!response.success) {
+        Alert.alert('Error', response.error || 'Failed to update workspace');
+        return;
       }
-    } catch (err) {
-      console.error('UpdateWorkspace error:', err);
-      Alert.alert('Erreur', 'Something went wrong while updating the workspace');
+
+      resetForm();
+      onClose();
+      onUpdate(response.data);
+    } catch (error) {
+      console.error('UpdateWorkspace error:', error);
+      Alert.alert('Error', error || 'Something went wrong while updating the workspace');
     } finally {
       setIsSubmitting(false);
     }
@@ -111,93 +90,93 @@ const UpdateWorkspace = ({ open, workspace = null, onUpdate = () => {}, onClose 
 
   return (
     <Modal
-      visible={open}
-      transparent
       animationType="slide"
+      transparent
+      visible={open}
       onRequestClose={handleClose}
     >
-      <Pressable className="flex-1 bg-black/50" onPress={handleClose}>
+      <Pressable
+        className="flex-1 bg-black/60 justify-end"
+        onPress={handleClose}
+      >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
+          className="w-full"
         >
-          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }} keyboardShouldPersistTaps="handled">
-            <View onStartShouldSetResponder={() => true} className="absolute bottom-0 left-0 right-0 bg-[#2a2a2a] p-4 rounded-t-xl">
-              <Text className="text-white text-lg font-semibold mb-3">Update Workspace</Text>
+          <ScrollView
+            className="bg-[#2a2a2a] rounded-t-3xl p-6 max-h-[90%]"
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text className="text-white text-xl font-bold mb-6">
+              Update Workspace
+            </Text>
 
-              {/* Displayname */}
-              <View className="mb-3">
-                <Text className="text-sm text-gray-300 mb-1">Displayname</Text>
-                <TextInput
-                  value={workspaceData.displayName}
-                  onChangeText={(text) => setInformation('displayName', text)}
-                  placeholder="Display name"
-                  placeholderTextColor="#6B728C"
-                  className="bg-[#1a1a1a] text-white px-3 py-2 rounded"
-                />
-              </View>
-
-              {/* Name */}
-              <View className="mb-3">
-                <Text className="text-sm text-gray-300 mb-1">Name</Text>
-                <TextInput
-                  value={workspaceData.name}
-                  onChangeText={(text) => setInformation('name', text)}
-                  placeholder="Workspace name (unique)"
-                  placeholderTextColor="#6B728C"
-                  className="bg-[#1a1a1a] text-white px-3 py-2 rounded"
-                />
-              </View>
-
-              {/* Description (textarea-like) */}
-              <View className="mb-3">
-                <Text className="text-sm text-gray-300 mb-1">Description</Text>
-                <TextInput
-                  value={workspaceData.description}
-                  onChangeText={(text) => setInformation('description', text)}
-                  placeholder="Workspace description"
-                  placeholderTextColor="#6B728C"
-                  className="bg-[#1a1a1a] text-white px-3 py-2 rounded"
-                  multiline
-                  numberOfLines={5}
-                  style={{ minHeight: 100, textAlignVertical: 'top' }}
-                />
-              </View>
-
-              {/* Website */}
-              <View className="mb-3">
-                <Text className="text-sm text-gray-300 mb-1">Website</Text>
-                <TextInput
-                  value={workspaceData.website}
-                  onChangeText={(text) => setInformation('website', text)}
-                  placeholder="https://example.com"
-                  placeholderTextColor="#6B728C"
-                  className="bg-[#1a1a1a] text-white px-3 py-2 rounded"
-                  autoCapitalize="none"
-                  keyboardType="url"
-                />
-              </View>
-
-              <View className="flex-row gap-3">
-                <Pressable
-                  onPress={handleClose}
-                  disabled={isSubmitting}
-                  className="flex-1 bg-[#1a1a1a] py-3 rounded-xl items-center justify-center"
-                >
-                  <Text className="text-white">Cancel</Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={handleUpdate}
-                  disabled={isSubmitting}
-                  className="flex-1 bg-[#0079BF] py-3 rounded-xl items-center justify-center"
-                >
-                  <Text className="text-white font-semibold">
-                    {isSubmitting ? 'Updating...' : 'Update'}
-                  </Text>
-                </Pressable>
-              </View>
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-gray-400 mb-2">
+                Display Name *
+              </Text>
+              <TextInput
+                value={workspaceData.displayName}
+                onChangeText={(value) => updateField('displayName', value)}
+                placeholder="Workspace display name"
+                placeholderTextColor="#6B778C"
+                className="bg-[#1a1a1a] text-white px-4 py-3 rounded-xl text-base"
+                autoFocus
+              />
             </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-gray-400 mb-2">
+                Short Name
+              </Text>
+              <TextInput
+                value={workspaceData.name}
+                onChangeText={(value) => updateField('name', value)}
+                placeholder="short-name (optional)"
+                placeholderTextColor="#6B778C"
+                className="bg-[#1a1a1a] text-white px-4 py-3 rounded-xl text-base"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-gray-400 mb-2">
+                Description
+              </Text>
+              <TextInput
+                value={workspaceData.description}
+                onChangeText={(value) => updateField('description', value)}
+                placeholder="Add a description"
+                placeholderTextColor="#6B778C"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                className="bg-[#1a1a1a] text-white px-4 py-3 rounded-xl text-base min-h-[80px]"
+              />
+            </View>
+
+            <View className="mb-6">
+              <Text className="text-sm font-semibold text-gray-400 mb-2">
+                Website
+              </Text>
+              <TextInput
+                value={workspaceData.website}
+                onChangeText={(value) => updateField('website', value)}
+                placeholder="https://example.com"
+                placeholderTextColor="#6B778C"
+                className="bg-[#1a1a1a] text-white px-4 py-3 rounded-xl text-base"
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+            </View>
+
+            <FormActions
+              onCancel={handleClose}
+              onSubmit={handleUpdate}
+              submitLabel="Update"
+              loading={isSubmitting}
+              disabled={!workspaceData.displayName.trim()}
+            />
           </ScrollView>
         </KeyboardAvoidingView>
       </Pressable>

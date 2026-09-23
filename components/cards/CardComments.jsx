@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { addComment, deleteComment } from '../../services/trello';
+import { addComment, deleteComment, updateComment } from '../../services/cards';
 
 export default function CardComments({ cardId, initialComments = [], onCommentsChange }) {
-  const { token } = useAuth();
-  const [comments, setComments] = useState(initialComments);
+  const [comments, setComments] = useState(Array.isArray(initialComments) ? initialComments : []);
+
+  useEffect(() => {
+    setComments(Array.isArray(initialComments) ? initialComments : []);
+  }, [initialComments]);
 
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
@@ -24,9 +26,13 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
 
     setPosting(true);
     try {
-      const comment = await addComment(cardId, token, newComment.trim());
-      if (comment) refresh([...comments, comment]);
-      setNewComment('');
+      const response = await addComment(cardId, newComment.trim());
+      if (response.success) {
+        refresh([...comments, response.data]);
+        setNewComment('');
+      } else {
+        Alert.alert("Erreur", response.error || "Impossible d'ajouter le commentaire");
+      }
     } catch (err) {
       console.error("Erreur ajout commentaire:", err);
       Alert.alert("Erreur", "Impossible d'ajouter le commentaire");
@@ -51,14 +57,11 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
     if (!editText.trim()) return;
 
     try {
-      const deleted = await deleteComment(comment.id, token);
-      if (!deleted) throw new Error("Delete failed");
-
-      const newComment = await addComment(cardId, token, editText.trim());
-      if (!newComment) throw new Error("Add failed");
+      const response = await updateComment(cardId, comment.id, editText.trim());
+      if (!response.success) throw new Error(response.error || "Update failed");
 
       const newList = comments.map(c =>
-        c.id === comment.id ? newComment : c
+        c.id === comment.id ? response.data : c
       );
       refresh(newList);
 
@@ -73,8 +76,9 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
   // Delete
   const handleDelete = async (commentId) => {
     try {
-      const success = await deleteComment(commentId, token);
-      if (success) refresh(comments.filter(c => c.id !== commentId));
+      const response = await deleteComment(cardId, commentId);
+      if (response.success) refresh(comments.filter(c => c.id !== commentId));
+      else Alert.alert("Erreur", response.error || "Impossible de supprimer le commentaire");
     } catch (err) {
       console.error("Erreur suppression:", err);
     }
@@ -106,7 +110,7 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
       </View>
 
       {/* Comments list */}
-      {comments.map(comment => (
+      {Array.isArray(comments) ? comments.map(comment => (
         <View key={comment.id} className="bg-[#333333] rounded-lg p-3 mb-3">
 
           {/* Header: Auteur + actions */}
@@ -156,7 +160,7 @@ export default function CardComments({ cardId, initialComments = [], onCommentsC
             {new Date(comment.date).toLocaleString()}
           </Text>
         </View>
-      ))}
+      )) : null}
     </View>
   );
 }

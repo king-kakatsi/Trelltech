@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { addMember, deleteMember, getWorkspaceMembers } from '../../services/workspaces';
 
@@ -10,57 +10,46 @@ const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () =
 
   const workspaceId = workspace?.id;
 
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     if (!workspaceId) return;
     setLoading(true);
     try {
-      const res = await getWorkspaceMembers(workspaceId);
+      const response = await getWorkspaceMembers(workspaceId);
 
-      // normalize response: support [success, payload], direct array, or { members: [...] }
-      let data;
-      if (Array.isArray(res) && typeof res[0] === 'boolean') {
-        const [success, payload] = res;
-        if (!success) throw payload;
-        data = payload;
-      } else {
-        data = res;
-      }
-
-      const membersArray = Array.isArray(data)
-        ? data
-        : (Array.isArray(data?.members) ? data.members : []);
+      const membersArray = response.success && Array.isArray(response.data)
+        ? response.data
+        : [];
 
       setMembers(membersArray);
     } catch (err) {
       console.error('fetchMembers error', err);
-      Alert.alert('Erreur', 'Impossible de charger les membres.');
+      Alert.alert('Error', 'Unable to load members.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [workspaceId]);
 
   useEffect(() => {
     if (open && workspaceId) {
       fetchMembers();
     } else if (!open) {
-      // reset local form when closed
       setEmail('');
       setMembers([]);
     }
-  }, [open, workspaceId]);
+  }, [open, workspaceId, fetchMembers]);
 
   const handleAddMember = async () => {
     if (!workspaceId) return;
     const mail = (email || '').trim().toLowerCase();
     if (!mail) {
-      Alert.alert('Erreur', 'Please enter an email');
+      Alert.alert('Error', 'Please enter an email');
       return;
     }
 
     // simple email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(mail)) {
-      Alert.alert('Erreur', 'Veuillez fournir une adresse email valide.');
+      Alert.alert('Error', 'Please enter a valid email address.');
       return;
     }
 
@@ -75,17 +64,19 @@ const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () =
 
     setSubmitting(true);
     try {
-      // use addMember service (throws on failure)
-      const result = await addMember(workspaceId, mail, fullName);
-      // refresh local list and UI
+      const response = await addMember(workspaceId, { email: mail, fullName });
+
+      if (!response.success) {
+        Alert.alert('Error', response.error || 'Could not add member.');
+        return;
+      }
+
       await fetchMembers();
       setEmail('');
-      // Alert.alert('Succès', 'Membre ajouté.');
-      try { await Promise.resolve(onMembersUpdated(result)); } catch (_) {}
+      try { await Promise.resolve(onMembersUpdated(response.data)); } catch (_) {}
     } catch (err) {
       console.error('handleAddMember error', err);
-      const message = (err && (err.message || err?.error || err?.messageText)) || 'Could not add member.';
-      Alert.alert('Erreur', message);
+      Alert.alert('Error', 'Could not add member.');
     } finally {
       setSubmitting(false);
     }
@@ -95,21 +86,24 @@ const ManageWorkspaceMembers = ({ open = false, workspace = null, onClose = () =
     if (!workspaceId || !memberId) return;
     Alert.alert(
       'Confirmation',
-      'Retirer ce membre de l\'espace de travail ?',
+      'Remove this member from the workspace?',
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Retirer', style: 'destructive', onPress: async () => {
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: async () => {
           setSubmitting(true);
           try {
-            // use deleteMember service (throws on failure)
-            const result = await deleteMember(workspaceId, memberId);
+            const response = await deleteMember(workspaceId, memberId);
+
+            if (!response.success) {
+              Alert.alert('Error', response.error || 'Could not remove member.');
+              return;
+            }
+
             await fetchMembers();
-            // Alert.alert('Succès', 'Membre supprimé.');
-            try { await Promise.resolve(onMembersUpdated(result)); } catch (_) {}
+            try { await Promise.resolve(onMembersUpdated(response.data)); } catch (_) {}
           } catch (err) {
             console.error('handleRemoveMember error', err);
-            const message = (err && (err.message || err?.error)) || 'Impossible de supprimer le membre.';
-            Alert.alert('Erreur', message);
+            Alert.alert('Error', 'Could not remove member.');
           } finally {
             setSubmitting(false);
           }

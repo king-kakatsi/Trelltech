@@ -4,7 +4,6 @@ import { View, Text, Pressable } from 'react-native';
 
 export default function BoardDetailHeader({
   boardName,
-  backgroundColor,
   onBack,
   onOpenMenu,
   onCreateList

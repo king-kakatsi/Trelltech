@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
+import { View, Text, TextInput } from 'react-native';
 import BottomDrawer from '../ui/BottomDrawer';
+import FormActions from '../ui/FormActions';
 
 export default function CreateListDrawer({
   visible,
@@ -30,27 +31,13 @@ export default function CreateListDrawer({
         />
       </View>
 
-      <View className="flex-row gap-3">
-        <Pressable
-          onPress={onClose}
-          disabled={creating}
-          className="flex-1 bg-[#1a1a1a] py-4 rounded-xl"
-        >
-          <Text className="text-white text-center font-semibold text-base">
-            Cancel
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={onCreate}
-          disabled={creating}
-          className="flex-1 bg-white py-4 rounded-xl"
-        >
-          <Text className="text-gray-900 text-center font-semibold text-base">
-            {creating ? 'Creating...' : 'Create'}
-          </Text>
-        </Pressable>
-      </View>
+      <FormActions
+        onCancel={onClose}
+        onSubmit={onCreate}
+        submitLabel="Create"
+        loading={creating}
+        disabled={!listName.trim()}
+      />
     </BottomDrawer>
   );
 }

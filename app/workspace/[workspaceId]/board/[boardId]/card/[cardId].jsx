@@ -9,7 +9,7 @@ import CardDetail from '../../../../../../components/cards/CardDetails';
  */
 export default function CardDetailScreen() {
   const router = useRouter();
-  const { workspaceId, boardId, cardId } = useLocalSearchParams();
+  const { cardId } = useLocalSearchParams();
 
   const handleArchive = () => {
     // Archive logic handled in CardDetail component

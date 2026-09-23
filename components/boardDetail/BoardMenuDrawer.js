@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { Text, Pressable } from 'react-native';
 import BottomDrawer from '../ui/BottomDrawer';
 
 export default function BoardMenuDrawer({

@@ -8,7 +8,6 @@ export default function ListCarousel({
   onIndexChange,
   onOpenListMenu,
   screenWidth,
-  screenHeight,
   workspaceId,
   boardId,
 }) {

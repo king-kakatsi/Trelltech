@@ -1,23 +1,13 @@
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 import Board from './Board';
 
-
-const BoardList = ({ boards = [] }) => {
-    return (
-        <View className="mt-1 pl-12">
-          {boards.map((b, index) => (
-            <TouchableOpacity
-              key={index}
-              className="flex-row items-center gap-3"
-            >
-              {/* <Table size={18} color="#6B778C" /> */}
-              {/* <Text className=" text-sm">{b}</Text> */}
-              <Board id={b} workspaceId={b.organizationId}  />
-            </TouchableOpacity>
-          ))}
-        </View>
-    );
-};
-
-export default BoardList;
+export default function BoardList({ boards = [], workspaceId }) {
+  return (
+    <View className="mt-1 pl-12">
+      {boards.map((board) => (
+        <Board key={board.id} board={board} workspaceId={workspaceId} />
+      ))}
+    </View>
+  );
+}

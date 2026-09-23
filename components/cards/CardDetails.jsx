@@ -3,8 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../contexts/AuthContext';
-import { deleteCard, getCard, getCardComments, updateCardDates } from '../../services/trello';
+import { deleteCard, getCard, getCardComments, updateCard, updateCardDates } from '../../services/cards';
 import { getMemberColor, getMemberInitials } from '../../utils/memberColors';
 import AddMembersDrawer from '../ui/AddMembersDrawer';
 import BottomDrawer from '../ui/BottomDrawer';
@@ -21,7 +20,6 @@ import DateSelectionDrawer from './DateSelectionDrawer';
  * @param {Function} onArchived - Callback function called when card is archived
  */
 export default function CardDetail({ cardId, onArchived }) {
-  const { token } = useAuth();
   const { workspaceId, boardId } = useLocalSearchParams();
   const [card, setCard] = useState(null);
   const [comments, setComments] = useState([]);
@@ -40,26 +38,35 @@ export default function CardDetail({ cardId, onArchived }) {
    * Updates local state with fetched data
    */
   const fetchData = useCallback(async () => {
-    if (!cardId || !token) return;
-    
+    if (!cardId) return;
+
     setLoading(true);
     try {
-      const cardData = await getCard(cardId, token);
-      setCard(cardData);
+      const cardResponse = await getCard(cardId);
+      if (cardResponse.success) {
+        setCard(cardResponse.data);
+      } else {
+        Alert.alert('Error', cardResponse.error || 'Failed to load card');
+        return;
+      }
 
-      const cardComments = await getCardComments(cardId, token);
-      setComments(cardComments);
+      const commentsResponse = await getCardComments(cardId);
+      if (commentsResponse.success) {
+        setComments(Array.isArray(commentsResponse.data) ? commentsResponse.data : []);
+      } else {
+        setComments([]);
+      }
     } catch (error) {
       console.error('Error loading card:', error);
       Alert.alert('Error', 'Failed to load card');
     } finally {
       setLoading(false);
     }
-  }, [cardId, token]);
+  }, [cardId]);
 
   /**
    * Fetch card data and comments from the server
-   * Called when component mounts or when cardId/token changes
+   * Called when component mounts or when cardId changes
    */
   useEffect(() => {
     fetchData();
@@ -94,20 +101,22 @@ export default function CardDetail({ cardId, onArchived }) {
     }
 
     try {
-      const { updateCard, updateCardDates } = await import('../../services/trello');
-      
       // Update card basic information
-      await updateCard(cardId, token, { 
-        name: editedCardName.trim(), 
-        desc: editedCardDesc.trim() 
+      const updateResponse = await updateCard(cardId, {
+        name: editedCardName.trim(),
+        description: editedCardDesc.trim()
       });
-      
+      if (!updateResponse.success) {
+        Alert.alert('Error', updateResponse.error || 'Failed to update card');
+        return;
+      }
+
       // Update due date if provided
       if (editedCardDueDate) {
-        await updateCardDates(cardId, token, null, editedCardDueDate.toISOString());
+        await updateCardDates(cardId, undefined, editedCardDueDate.toISOString());
       } else if (card?.due) {
         // Remove due date if it was cleared
-        await updateCardDates(cardId, token, null, null);
+        await updateCardDates(cardId, undefined, null);
       }
       
       // Refresh card data
@@ -142,8 +151,8 @@ export default function CardDetail({ cardId, onArchived }) {
           onPress: async () => {
             try {
               setLoading(true);
-              const success = await deleteCard(cardId, token);
-              if (success) {
+              const response = await deleteCard(cardId);
+              if (response.success) {
                 Alert.alert('Carte archivée', 'La carte a été archivée avec succès.', [
                   {
                     text: 'OK',
@@ -364,7 +373,7 @@ export default function CardDetail({ cardId, onArchived }) {
           onDateSelected={async (selectedDate) => {
             setShowDatePicker(false);
             try {
-              await updateCardDates(cardId, token, null, selectedDate.toISOString());
+              await updateCardDates(cardId, undefined, selectedDate.toISOString());
               await fetchData();
             } catch (err) {
               console.error('Error updating due date:', err);
@@ -374,7 +383,7 @@ export default function CardDetail({ cardId, onArchived }) {
           onRemove={async () => {
             setShowDatePicker(false);
             try {
-              await updateCardDates(cardId, token, null, null);
+              await updateCardDates(cardId, undefined, null);
               await fetchData();
             } catch (err) {
               console.error('Error removing due date:', err);

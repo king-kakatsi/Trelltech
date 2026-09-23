@@ -1,19 +1,32 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BoardsHeader from '../../../components/boards/BoardsHeader';
 import BoardsList from '../../../components/boards/BoardsList';
 import CreateBoardDrawer from '../../../components/boards/CreateBoardDrawer';
 import { createBoard, getWorkspaceBoards } from '../../../services/boardService';
+import { createList } from '../../../services/list';
+import { getTemplateById } from '../../../utils/boardTemplates';
+import { required } from '../../../lib/validation';
+
+function buildSearchIndex(board) {
+  const name = (board.name || '').toLowerCase();
+  const description = (board.desc || '').toLowerCase();
+  const members = Array.isArray(board.members) ? board.members : [];
+  const memberTerms = members
+    .map((m) => `${m.username || ''} ${m.fullName || ''}`.toLowerCase())
+    .join(' ');
+
+  return `${name} ${description} ${memberTerms}`;
+}
 
 export default function WorkspaceBoardsScreen() {
   const { workspaceId, workspaceName } = useLocalSearchParams();
   const router = useRouter();
-  
+
   const [boards, setBoards] = useState([]);
-  const [filteredBoards, setFilteredBoards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,82 +36,88 @@ export default function WorkspaceBoardsScreen() {
   const [newBoardDescription, setNewBoardDescription] = useState('');
   const [creating, setCreating] = useState(false);
 
+  const fetchBoards = useCallback(async () => {
+    if (!workspaceId) return;
+
+    setLoading(true);
+    const response = await getWorkspaceBoards(workspaceId);
+
+    if (response.success) {
+      const openBoards = (response.data || []).filter((board) => !board.closed);
+      setBoards(openBoards);
+    } else {
+      console.error('Error fetching boards:', response.error);
+    }
+
+    setLoading(false);
+  }, [workspaceId]);
+
   useFocusEffect(
     useCallback(() => {
       fetchBoards();
-    }, [])
+    }, [fetchBoards])
   );
 
-  useEffect(() => {
-    filterBoards();
-  }, [searchQuery, boards, isAscending]);
-
-  const getMembersSearchHelper = (members) => {
-    let searchHelper = '';
-    for (const member of members) {
-      searchHelper += (member.username + member.fullName);
-    }
-    return searchHelper;
-  };
-
-  const filterBoards = () => {
+  const filteredBoards = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
     let filtered = [...boards];
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(board =>
-        `${board.name.toLowerCase()}${(board.desc || '').toLowerCase()}${getMembersSearchHelper(board.members)}`.includes(searchQuery.toLowerCase())
+
+    if (query) {
+      filtered = filtered.filter((board) =>
+        buildSearchIndex(board).includes(query)
       );
     }
-    if (!isAscending) filtered = filtered.reverse();
-    setFilteredBoards(filtered);
-  };
 
-  const fetchBoards = async () => {
-    try {
-      setLoading(true);
-      const data = await getWorkspaceBoards(workspaceId);
-      
-      const openBoards = data.filter(board => !board.closed);
-      setBoards(openBoards);
-      setFilteredBoards(openBoards);
-    } catch (error) {
-      console.error('Error fetching boards:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    filtered.sort((a, b) => {
+      const comparison = (a.name || '').localeCompare(b.name || '');
+      return isAscending ? comparison : -comparison;
+    });
 
-  const onRefresh = async () => {
+    return filtered;
+  }, [boards, searchQuery, isAscending]);
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchBoards();
     setRefreshing(false);
-  };
+  }, [fetchBoards]);
 
   const handleCreateBoard = async (template) => {
-    if (!newBoardName.trim()) {
-      Alert.alert('Error', 'Board name cannot be empty');
+    const nameCheck = required(newBoardName, 'Board name');
+    if (!nameCheck.valid) {
+      Alert.alert('Error', nameCheck.error);
       return;
     }
 
-    try {
-      setCreating(true);
-      await createBoard(workspaceId, {
-        name: newBoardName.trim(),
-        desc: newBoardDescription.trim(),
-        template: template
-      });
+    setCreating(true);
+    const response = await createBoard(workspaceId, {
+      name: newBoardName.trim(),
+      description: newBoardDescription.trim(),
+    });
+
+    if (response.success) {
+      const board = response.data;
+      const templateConfig = getTemplateById(template);
+
+      if (templateConfig && templateConfig.lists.length > 0) {
+        for (const listName of templateConfig.lists) {
+          await createList(board.id, listName);
+        }
+      }
+
       setNewBoardName('');
       setNewBoardDescription('');
       setCreateDrawerVisible(false);
       await fetchBoards();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create board');
-    } finally {
-      setCreating(false);
+    } else {
+      Alert.alert('Error', response.error || 'Failed to create board');
     }
+
+    setCreating(false);
   };
 
   const toggleSortOrder = () => {
-    setIsAscending(prev => !prev);
+    setIsAscending((prev) => !prev);
   };
 
   const handleBoardPress = (boardId, boardName) => {
@@ -107,8 +126,8 @@ export default function WorkspaceBoardsScreen() {
       params: {
         workspaceId,
         boardId,
-        boardName
-      }
+        boardName,
+      },
     });
   };
 

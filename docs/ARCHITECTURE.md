@@ -1,650 +1,85 @@
-# Architecture Overview
+# Trelltech — Architecture Overview
 
-Complete guide to TrellTech's architecture, structure, and design patterns.
+This document describes the target architecture after the portfolio refactor. The goal is a codebase that is easy to navigate, test, and extend.
 
-## System Architecture
-
-### High-Level Overview
+## Layer map
 
 ```
-┌────────────────────────────────────────────────┐
-│           TrellTech Mobile App                 │
-│                                                │
-│  ┌──────────────────────────────────────────┐  │
-│  │      Presentation Layer (UI)             │  │
-│  │  - Expo Router Pages                     │  │
-│  │  - React Components                      │  │
-│  │  - NativeWind Styling                    │  │
-│  └──────────────┬───────────────────────────┘  │
-│                 │                              │
-│  ┌──────────────▼───────────────────────────┐  │
-│  │      State Management Layer              │  │
-│  │  - React Context API                     │  │
-│  │  - AuthContext                           │  │
-│  └──────────────┬───────────────────────────┘  │
-│                 │                              │
-│  ┌──────────────▼───────────────────────────┐  │
-│  │      Service Layer                       │  │
-│  │  - Axios Service (HTTP)                  │  │
-│  │  - Trello Service (API)                  │  │
-│  │  - Storage Service (AsyncStorage)        │  │
-│  └──────────────┬───────────────────────────┘  │
-└─────────────────┼──────────────────────────────┘
-                  │
-        ┌─────────┼─────────┐
-        │         │         │
-        ▼         ▼         ▼
-   ┌────────┐ ┌──────┐ ┌──────────┐
-   │ Trello │ │Local │ │ Device   │
-   │  API   │ │Store │ │ Features │
-   └────────┘ └──────┘ └──────────┘
+app/                 — Expo Router screens (presentation / routing only)
+components/
+  ui/                — Reusable primitives (BottomDrawer, Button, Input, EmptyState, MemberAvatar, FormActions, LoadingSpinner)
+  home/              — Home screen pieces
+  boards/            — Board list pieces
+  boardDetail/       — Board detail pieces
+  cards/             — Card detail / create / update pieces
+  workspace/         — Workspace pieces
+  automation/        — Automation Studio pieces (split from create-board.jsx)
+contexts/            — React contexts (Auth only)
+services/
+  api/               — HTTP client, auth interceptor, typed errors
+  boards.js          — Board API facade
+  lists.js           — List API facade
+  cards.js           — Card API facade
+  workspaces.js      — Workspace API facade
+  members.js         — Member API facade
+  auth.js            — OAuth + current user
+  localStorage.js    — AsyncStorage wrapper
+  index.js           — Optional barrel export
+lib/
+  validation.js      — Shared validators (required, url, email, ...)
+utils/               — Domain helpers (markdown parser, templates, colors, branch names)
+  markdown/          — Parser / labels / checklists / cards / sync
+  trello/            — retry / throttle helpers
+__tests__/           — Integration / unit tests
 ```
 
-## Project Structure
+## Service contract
 
-### Complete Directory Tree
+All service functions return:
 
-```
-├── app                         # Expo Router application
-│   ├── (auth)                   # Auth route group
-│   │   └── login.jsx             # Login screen
-│   │
-│   ├── index.jsx                    # Entry point
-│   ├── _layout.jsx                # Root layout
-│   ├── onboarding.jsx
-│   ├── (tabs)                    # Bottom tabs group
-│   │   ├── home.jsx               # Workspaces list
-│   │   ├── _layout.jsx           # Tabs navigator
-│   │   └── profile.jsx           # User profile
-│   └── workspace                  # Workspace routes
-│       └── [workspaceId]            # Dynamic workspace
-│           ├── board                 # Boards list
-│           │   └── [boardId]            # Board routes
-│           │       ├── card               # Card routes
-│           │       │   └── [cardId].jsx    # Card detail
-│           │       └── index.jsx          # Board detail (Kanban)
-│           ├── boards.jsx
-│           └── settings.jsx               # Workspace settings
-├── app.json
-├── assets
-│   └── images
-│       ├── android-icon-background.png
-│       ├── android-icon-foreground.png
-│       ├── android-icon-monochrome.png
-│       ├── favicon.png
-│       ├── icon.png
-│       ├── partial-react-logo.png
-│       ├── react-logo@2x.png
-│       ├── react-logo@3x.png
-│       ├── react-logo.png
-│       └── splash-icon.png
-├── babel.config.js
-├── components                                 # Reusable UI components
-│   ├── boardDetail                            #Board
-│   │   ├── BoardDetailHeader.js
-│   │   ├── BoardMembersBar.js
-│   │   ├── BoardMenuDrawer.js
-│   │   ├── CreateListDrawer.js
-│   │   ├── EditBoardDrawer.js
-│   │   ├── EditListDrawer.js
-│   │   ├── EmptyListsState.js
-│   │   ├── ListCarousel.js
-│   │   └── ListMenuDrawer.js
-│   ├── boards                            
-│   │   ├── BoardCard.js
-│   │   ├── BoardsHeader.js
-│   │   ├── BoardsList.js
-│   │   ├── CreateBoardDrawer.js
-│   │   └── EmptyBoardsState.js
-│   ├── cards                                  #Card
-│   │   ├── CardComments.jsx
-│   │   ├── CardCreate.jsx
-│   │   ├── CardDetails.jsx
-│   │   └── CardUpdate.jsx
-│   ├── CommentItem.jsx
-│   ├── home
-│   │   ├── Board.jsx
-│   │   ├── BoardList.jsx
-│   │   ├── OptionsModal.jsx
-│   │   ├── WorkspaceAccordion.jsx
-│   │   ├── WorkspaceList.jsx
-│   │   └── WorkspaceOptions.jsx
-│   ├── Kanban.jsx
-│   ├── LoadingSpinner.jsx
-│   ├── TaskCard.jsx
-│   ├── ui
-│   │   ├── AddMembersDrawer.jsx
-│   │   └── BottomDrawer.jsx
-│   └── workspace
-│       ├── ManageWorkspaceMembers.jsx
-│       ├── NewWorkspace.jsx
-│       └── UpdateWorkspace.jsx
-├── contexts                                     # React Context
-│   └── AuthContext.jsx                          # Authentication state
-├── docs                                          # Documentation
-│   ├── ARCHITECTURE.md
-│   ├── doc_links.txt
-│   ├── INSTALLATION.md
-│   └── QUICKSTART.md
-├── LICENSE.txt
-├── metro.config.js
-├── nativewind-env.d.ts
-├── package.json
-├── package-lock.json
-├── README.md
-├── services                                       # Service layer
-│   ├── axiosService.js                            # HTTP client wrapper
-│   ├── boardService.js
-│   ├── card.js
-│   ├── list.js
-│   ├── localStorageService.js                     # AsyncStorage wrapper
-│   ├── memberService.js
-│   ├── trello.js                                   # Trello API integration
-│   └── workspaces.js
-├── tailwind.config.js                                # NativeWind config
-├── __tests__
-│   ├── Auth.integration.test.js
-│   └── BoardDetailScreen.integration.test.js
-├── TEST_STRATEGY.md
-├── tsconfig.json
-└── utils                                              # Utility functions
-    ├── boardTemplates.js
-    ├── constants.js                                  # Configuration
-    └── memberColors.js
-     
-
-## Expo Router (File-Based Routing)
-
-### How Expo Router Works
-
-Expo Router uses a file-based routing system similar to Next.js:
-
-```
-app/
-├── index.jsx                 → /
-├── login.jsx                 → /login
-├── workspace/
-│   └── [workspaceId]/
-│       └── boards.jsx        → /workspace/:workspaceId/boards
+```ts
+{ success: boolean; data?: T; error?: string }
 ```
 
-### Route Groups
+Never throw plain strings. Network errors are normalized to the above shape by the HTTP client.
 
-Routes in parentheses don't appear in the URL:
+## HTTP client
 
-```
-app/
-├── (auth)/
-│   └── login.jsx             → /login (not /auth/login)
-├── (tabs)/
-│   ├── home.jsx              → /home
-│   └── profile.jsx           → /profile
-```
+- `services/api/client.js` wraps axios.
+- Base URL and `key` param are injected centrally.
+- A request interceptor reads `trello_token` from AsyncStorage and injects the `token` param.
+- No manual `?key=...&token=...` string concatenation lives outside the interceptor.
 
-### Dynamic Routes
+## Authentication
 
-Use brackets for dynamic parameters:
+- `services/auth.js` owns `authenticate()` and `getCurrentUser()`.
+- `contexts/AuthContext.jsx` consumes only those named exports.
+- The token is always read by the interceptor; services never call `fetchFromLocalStorage('trello_token')` directly.
 
-```
-app/
-└── workspace/
-    └── [workspaceId]/        → /workspace/123
-        └── board/
-            └── [boardId]/    → /workspace/123/board/456
-```
+## Validation
 
-### Layout Files
+- `lib/validation.js` exposes `required(value, fieldName)` and `validateUrl(url)`.
+- Screens use these helpers before calling services; inline validation duplication is avoided.
 
-`_layout.jsx` files wrap child routes:
+## Naming conventions
 
-```javascript
-// app/(tabs)/_layout.jsx
-import { Tabs } from 'expo-router';
+- English everywhere: file names, variables, comments, user-facing messages.
+- Components: PascalCase files export default PascalCase.
+- Services/helpers: camelCase files export named functions.
+- Avoid abbreviations except universally known ones (`id`, `desc` is OK when matching the external API).
 
-export default function TabsLayout() {
-  return (
-    <Tabs>
-      <Tabs.Screen name="home" options={{ title: 'Home' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
-    </Tabs>
-  );
-}
-```
+## Styling
 
-## Navigation Flow
+- NativeWind/Tailwind only.
+- Shared colors live in `utils/theme.js`.
+- Shared layout primitives live in `components/ui/`.
 
-### Complete User Journey
+## Dead-code policy
 
-```
-App Launch
-    ↓
-Check Authentication (AuthContext)
-    ├─ Not Authenticated → /login
-    │       ↓
-    │   Trello OAuth
-    │       ↓
-    │   Store Token (AsyncStorage)
-    │       ↓
-    └─ Authenticated → /(tabs)/home
-            ↓
-      Workspaces List
-            ↓ (Click workspace)
-      /workspace/[id]/boards
-            ↓ (Click board)
-      /workspace/[id]/board/[id]
-      (Kanban Carousel)
-            ↓ (Click card)
-      /workspace/[id]/board/[id]/card/[id]
-      (Card Detail)
-```
+- Empty files are deleted.
+- Commented-out blocks are removed.
+- Unused imports are cleaned by lint.
 
-### Navigation Examples
+## Tests
 
-```javascript
-import { useRouter } from 'expo-router';
-
-function MyComponent() {
-  const router = useRouter();
-  
-  // Navigate to workspace boards
-  router.push(`/workspace/${workspaceId}/boards`);
-  
-  // Navigate back
-  router.back();
-  
-  // Replace current route
-  router.replace('/home');
-}
-```
-
-## Component Architecture
-
-### Component Hierarchy
-
-```
-App Root
-├── AuthContext.Provider
-│   └── RootLayout (_layout.jsx)
-│       ├── TabsLayout ((tabs)/_layout.jsx)
-│       │   ├── HomeScreen (home.jsx)
-│       │   │   └── WorkspaceList
-│       │   │       └── WorkspaceCard (multiple)
-│       │   └── ProfileScreen (profile.jsx)
-│       │
-│       └── WorkspaceLayout (workspace/[id]/_layout.jsx)
-│           ├── BoardsScreen (boards.jsx)
-│           │   └── BoardList
-│           │       └── BoardCard (multiple)
-│           └── BoardDetailScreen (board/[id]/index.jsx)
-│               └── KanbanCarousel
-│                   └── KanbanColumn (multiple)
-│                       └── TaskCard (multiple)
-```
-
-### Component Design Patterns
-
-#### 1. Container/Presentational Pattern
-
-```javascript
-// Container Component (Smart)
-// workspace/[workspaceId]/boards.jsx
-export default function BoardsScreen() {
-  const { workspaceId } = useLocalSearchParams();
-  const [boards, setBoards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    fetchBoards(workspaceId);
-  }, [workspaceId]);
-  
-  return <BoardList boards={boards} loading={loading} />;
-}
-
-// Presentational Component (Dumb)
-// components/board/BoardList.jsx
-export default function BoardList({ boards, loading }) {
-  if (loading) return <LoadingSpinner />;
-  
-  return (
-    <View className="p-4">
-      {boards.map(board => (
-        <BoardCard key={board.id} board={board} />
-      ))}
-    </View>
-  );
-}
-```
-
-#### 2. Custom Hooks
-
-```javascript
-// hooks/useTrello.js
-export function useTrello() {
-  const { token } = useAuth();
-  
-  const fetchWorkspaces = async () => {
-    return await trelloService.getWorkspaces(token);
-  };
-  
-  const createBoard = async (name, workspaceId) => {
-    return await trelloService.createBoard(token, name, workspaceId);
-  };
-  
-  return { fetchWorkspaces, createBoard };
-}
-
-// Usage in component
-function HomeScreen() {
-  const { fetchWorkspaces } = useTrello();
-  const [workspaces, setWorkspaces] = useState([]);
-  
-  useEffect(() => {
-    loadWorkspaces();
-  }, []);
-  
-  async function loadWorkspaces() {
-    const data = await fetchWorkspaces();
-    setWorkspaces(data);
-  }
-}
-```
-
-## State Management
-
-### AuthContext Structure
-
-```javascript
-// contexts/AuthContext.jsx
-import { createContext, useState, useEffect, useContext } from 'react';
-import { getItem, setItem, removeItem } from '@/services/localStorageService';
-
-const AuthContext = createContext();
-
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-  
-  // Load auth state from storage on mount
-  useEffect(() => {
-    loadAuthState();
-  }, []);
-  
-  async function loadAuthState() {
-    const savedToken = await getItem('trello_token');
-    const savedUser = await getItem('trello_user');
-    
-    if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
-    }
-    
-    setLoading(false);
-  }
-  
-  async function login(authToken, userData) {
-    await setItem('trello_token', authToken);
-    await setItem('trello_user', JSON.stringify(userData));
-    setToken(authToken);
-    setUser(userData);
-  }
-  
-  async function logout() {
-    await removeItem('trello_token');
-    await removeItem('trello_user');
-    setToken(null);
-    setUser(null);
-  }
-  
-  return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-}
-```
-
-### Local State vs Global State
-
-**Use Local State (useState) for:**
-- UI state (loading, errors, form inputs)
-- Component-specific data
-- Temporary data
-
-**Use Global State (Context) for:**
-- Authentication data
-- User profile
-- App-wide settings
-- Shared data across screens
-
-## Service Layer Architecture
-
-### Generic Axios Service
-
-```javascript
-// services/axiosService.js
-import axios from 'axios';
-
-export class AxiosService {
-  constructor(baseURL) {
-    this.client = axios.create({
-      baseURL,
-      timeout: 10000,
-    });
-  }
-  
-  setAuthToken(token) {
-    if (token) {
-      this.client.defaults.headers.common['Authorization'] = `OAuth oauth_consumer_key="${API_KEY}", oauth_token="${token}"`;
-    }
-  }
-  
-  async get(url, params = {}) {
-    const response = await this.client.get(url, { params });
-    return response.data;
-  }
-  
-  async post(url, data) {
-    const response = await this.client.post(url, data);
-    return response.data;
-  }
-  
-  async put(url, data) {
-    const response = await this.client.put(url, data);
-    return response.data;
-  }
-  
-  async delete(url) {
-    const response = await this.client.delete(url);
-    return response.data;
-  }
-}
-```
-
-### Trello API Service
-
-```javascript
-// services/trello.js
-import { AxiosService } from './axiosService';
-import { TRELLO_CONFIG } from '@/constants/config';
-
-class TrelloService extends AxiosService {
-  constructor() {
-    super(TRELLO_CONFIG.BASE_URL);
-  }
-  
-  async getWorkspaces(token) {
-    this.setAuthToken(token);
-    return await this.get('/members/me/organizations');
-  }
-  
-  async getBoards(workspaceId, token) {
-    this.setAuthToken(token);
-    return await this.get(`/organizations/${workspaceId}/boards`);
-  }
-  
-  async createBoard(token, name, workspaceId) {
-    this.setAuthToken(token);
-    return await this.post('/boards', {
-      name,
-      idOrganization: workspaceId,
-      defaultLists: false,
-    });
-  }
-}
-
-export const trelloService = new TrelloService();
-```
-
-## Data Flow
-
-### Fetch Data Flow
-
-```
-Component Mount
-    ↓
-useEffect Hook
-    ↓
-Call Service Function (trelloService.getBoards)
-    ↓
-AxiosService makes HTTP request
-    ↓
-Trello API returns data
-    ↓
-Service returns parsed data
-    ↓
-Component updates state (setBoards)
-    ↓
-UI re-renders with new data
-```
-
-### Create/Update Flow
-
-```
-User Action (Button Click)
-    ↓
-Event Handler (handleCreate)
-    ↓
-Show Loading State
-    ↓
-Call Service Function (trelloService.createBoard)
-    ↓
-AxiosService POST request
-    ↓
-Trello API creates resource
-    ↓
-Service returns new resource
-    ↓
-Update local state
-    ↓
-Hide Loading / Show Success
-    ↓
-Navigate or Refresh UI
-```
-
-## Error Handling
-
-### Service Layer Error Handling
-
-```javascript
-// services/axiosService.js
-async get(url, params = {}) {
-  try {
-    const response = await this.client.get(url, { params });
-    return { success: true, data: response.data };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.response?.data?.message || 'Request failed',
-    };
-  }
-}
-```
-
-### Component Error Handling
-
-```javascript
-function BoardsScreen() {
-  const [error, setError] = useState(null);
-  
-  async function loadBoards() {
-    setError(null);
-    const result = await trelloService.getBoards(workspaceId, token);
-    
-    if (!result.success) {
-      setError(result.error);
-      return;
-    }
-    
-    setBoards(result.data);
-  }
-  
-  if (error) {
-    return <ErrorMessage message={error} onRetry={loadBoards} />;
-  }
-}
-```
-
-## Performance Optimization
-
-### Memoization
-
-```javascript
-import { useMemo, useCallback } from 'react';
-
-function BoardList({ boards }) {
-  // Memoize expensive calculations
-  const sortedBoards = useMemo(() => {
-    return boards.sort((a, b) => a.name.localeCompare(b.name));
-  }, [boards]);
-  
-  // Memoize callback functions
-  const handleBoardClick = useCallback((boardId) => {
-    router.push(`/board/${boardId}`);
-  }, [router]);
-  
-  return sortedBoards.map(board => (
-    <BoardCard key={board.id} board={board} onClick={handleBoardClick} />
-  ));
-}
-```
-
-### List Optimization
-
-```javascript
-import { FlatList } from 'react-native';
-
-function BoardList({ boards }) {
-  const renderItem = ({ item }) => <BoardCard board={item} />;
-  
-  return (
-    <FlatList
-      data={boards}
-      renderItem={renderItem}
-      keyExtractor={item => item.id}
-      // Performance optimizations
-      removeClippedSubviews={true}
-      maxToRenderPerBatch={10}
-      updateCellsBatchingPeriod={50}
-      initialNumToRender={10}
-      windowSize={21}
-    />
-  );
-}
-```
-
-## Design Principles
-
-1. **Separation of Concerns**: UI, logic, and data access are separated
-2. **Single Responsibility**: Each component/service has one clear purpose
-3. **Reusability**: Components and services can be reused across the app
-4. **Scalability**: Easy to add new features without breaking existing code
-5. **Testability**: Components and services can be tested independently
+- `npm test` and `npm run lint` must pass before a change is considered complete.

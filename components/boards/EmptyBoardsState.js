@@ -1,31 +1,22 @@
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import EmptyState from '../ui/EmptyState';
 
 export default function EmptyBoardsState({ searchQuery, onCreateBoard }) {
+  const hasSearch = searchQuery && searchQuery.trim().length > 0;
+
   return (
-    <View className="flex-1 justify-center items-center px-6">
-      <View className="bg-neutral-800 rounded-full p-6 mb-4">
-        <Ionicons name="folder-open-outline" size={64} color="#9ca3af" />
-      </View>
-      <Text className="text-white text-center text-lg font-semibold mb-2">
-        {searchQuery.trim() ? 'No boards found' : 'No boards yet'}
-      </Text>
-      <Text className="text-neutral-400 text-center mb-6">
-        {searchQuery.trim()
+    <EmptyState
+      icon="folder-open-outline"
+      title={hasSearch ? 'No boards found' : 'No boards yet'}
+      subtitle={
+        hasSearch
           ? 'Try a different search term'
-          : 'Create your first board to get started'}
-      </Text>
-      {!searchQuery.trim() && (
-        <Pressable
-          onPress={onCreateBoard}
-          className="bg-white px-6 py-3 rounded-xl"
-        >
-          <Text className="text-gray-900 font-semibold">
-            Create First Board
-          </Text>
-        </Pressable>
-      )}
-    </View>
+          : 'Create your first board to get started'
+      }
+      actionLabel={hasSearch ? undefined : 'Create First Board'}
+      onAction={hasSearch ? undefined : onCreateBoard}
+      iconColor="#9ca3af"
+      iconContainerClassName="bg-neutral-800"
+    />
   );
 }

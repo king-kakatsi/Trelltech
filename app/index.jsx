@@ -25,13 +25,13 @@ export default function Index() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, scaleAnim]);
 
   useEffect(() => {
     const initializeApp = async () => {
       if (!isLoading) {
         const hasSeenOnboarding = await fetchFromLocalStorage('hasSeenOnboarding');
-        setTimeout(() => {
+        return setTimeout(() => {
           if (isAuthenticated) {
             router.replace('/(tabs)/home');
           } else if (!hasSeenOnboarding) {
@@ -41,10 +41,16 @@ export default function Index() {
           }
         }, 1500);
       }
+      return null;
     };
 
-    initializeApp();
-  }, [isAuthenticated, isLoading]);
+    let timer;
+    initializeApp().then((t) => { timer = t; });
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isAuthenticated, isLoading, router]);
 
   return (
     <View className="flex-1 bg-neutral-900 items-center justify-center">

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
+import { View, Text, TextInput, ScrollView } from 'react-native';
 import BottomDrawer from '../ui/BottomDrawer';
+import FormActions from '../ui/FormActions';
 
 export default function EditBoardDrawer({
   visible,
@@ -47,25 +48,12 @@ export default function EditBoardDrawer({
           />
         </View>
 
-        <View className="flex-row gap-3">
-          <Pressable
-            onPress={onClose}
-            className="flex-1 bg-[#1a1a1a] py-4 rounded-xl"
-          >
-            <Text className="text-white text-center font-semibold text-base">
-              Cancel
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={onSave}
-            className="flex-1 bg-white py-4 rounded-xl"
-          >
-            <Text className="text-gray-900 text-center font-semibold text-base">
-              Save
-            </Text>
-          </Pressable>
-        </View>
+        <FormActions
+          onCancel={onClose}
+          onSubmit={onSave}
+          submitLabel="Save"
+          disabled={!boardName.trim()}
+        />
       </ScrollView>
     </BottomDrawer>
   );

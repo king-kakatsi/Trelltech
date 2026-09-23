@@ -70,6 +70,7 @@ export default function BottomDrawer({ visible, onClose, children }) {
       showSubscription.remove();
       hideSubscription.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -109,6 +110,7 @@ export default function BottomDrawer({ visible, onClose, children }) {
         keyboardOffset.setValue(0);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   if (!shouldRender) return null;
@@ -138,13 +140,18 @@ export default function BottomDrawer({ visible, onClose, children }) {
           bottom: 0,
           left: 0,
           right: 0,
+          backgroundColor: '#2a2a2a',
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          paddingHorizontal: 24,
+          paddingTop: 24,
+          paddingBottom: 32,
           transform: [
             { translateY: translateY },
             { translateY: dragY },
             { translateY: keyboardOffset }
           ],
         }}
-        className="bg-[#2a2a2a] rounded-t-3xl px-6 py-6 pb-8"
       >
         <View
           {...panResponder.panHandlers}
