@@ -1,336 +1,51 @@
-# Installation Guide
-
-Complete guide for setting up TrellTech on your local machine.
+# Installation
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed:
+- Node.js 18 or newer
+- npm 9 or newer
+- Expo Go app or an Android emulator / iOS simulator
+- A Trello API key (from the Trello developer portal)
 
-### Required Software
+## Installation Steps
 
-- **Node.js** 20.x or higher ([Download](https://nodejs.org/))
-- **npm** 9.x or higher (comes with Node.js)
-- **Git** ([Download](https://git-scm.com/))
-- **Watchman** (Mac only, recommended) ([Installation](https://facebook.github.io/watchman/docs/install))
+1. Clone the repository and enter the folder.
+2. Run `npm install`.
+3. Create a `.env` file with the Trello values below.
+4. Run `npx expo start`.
+5. Open the app in Expo Go, an emulator, or a simulator.
+6. Log in with Trello when prompted.
 
-### Platform-Specific Requirements
-
-#### For iOS Development (Mac only)
-- **Xcode** 14.0 or higher ([Download from App Store](https://apps.apple.com/us/app/xcode/id497799835))
-- **Xcode Command Line Tools**
-- **iOS Simulator** (included with Xcode)
-
-#### For Android Development
-- **Android Studio** ([Download](https://developer.android.com/studio))
-- **Android SDK** (included with Android Studio)
-- **Android Emulator** (configured in Android Studio)
-- **Java Development Kit (JDK)** 11 or higher
-
-You can still use VsCode with expo to run the app
-
-### Verify Prerequisites
+## Environment Setup
 
 ```bash
-# Check Node.js version
-node --version  # Should be v18.x or higher
-
-# Check npm version
-npm --version   # Should be v9.x or higher
-
-# Check Git
-git --version   # Any recent version
-
-# Check Watchman (Mac only)
-watchman --version
-
-# Check Java (for Android)
-java -version   # Should be 11 or higher
+EXPO_PUBLIC_APP_NAME=Trelltech
+EXPO_PUBLIC_API_BASE_URL=https://api.trello.com/1
+EXPO_PUBLIC_TRELLTECH_API_KEY=your_key_here
+EXPO_PUBLIC_TRELLTECH_API_SECRET=your_secret_here
+EXPO_PUBLIC_OAUTH_CALLBACK=trelltech://oauth
+EXPO_PUBLIC_SCOPES=read,write
 ```
 
-## Step 1: Clone the Repository
-
-```bash
-# Using HTTPS
-git clone https://github.com/EpitechCodingAcademyPromo2026/C-COD-290-COT-2-1-epicture-6.git
-
-# Or using SSH
-git clone git@github.com:EpitechCodingAcademyPromo2026/C-COD-290-COT-2-1-epicture-6.git
-
-```
-
-## Step 2: Install Dependencies
-
-```bash
-# Install all npm packages
-npm install
-
-# This will install:
-# - React Native and Expo
-# - Expo Router for navigation
-# - NativeWind for styling
-# - AsyncStorage for local storage
-# - Axios for HTTP requests
-# - And all other dependencies
-```
-
-## Step 3: Install Expo CLI Globally
-
-```bash
-npm install -g expo-cli
-```
-
-## Step 4: Configuration Setup
-
-### Create Configuration File
-
-Create `constants/config.js`:
-
-```javascript
-export const TRELLO_CONFIG = {
-  API_KEY: 'your-trello-api-key-here',
-  BASE_URL: 'https://api.trello.com/1',
-};
-
-export const COLORS = {
-  primary: '#0079BF',
-  danger: '#EB5A46',
-  background: '#1a1a1a',
-  surface: '#2a2a2a',
-  text: '#ffffff',
-  textSecondary: '#b0b0b0',
-};
-
-export const APP_CONFIG = {
-  name: 'TrellTech',
-  version: '1.0.0',
-};
-```
-
-### Get Trello API Credentials
-
-1. Go to [Trello Power-Ups Admin](https://trello.com/power-ups/admin)
-2. Click "New" to create a new Power-Up
-3. Fill in the required information
-4. Copy your **API Key**
-5. Click "Generate a Token" to get your **Token**
-6. Add these to `constants/config.js`
-
-
-## Step 5: Start Development Server
-
-```bash
-# Start Expo development server
-npx expo start
-
-# Or with cache clearing
-npx expo start -c
-```
-
-You should see a QR code and options to:
-- Press `i` for iOS Simulator
-- Press `a` for Android Emulator
-- Press `w` for web (not fully supported)
-- Press `r` to hot reload
-
-## Step 6: Run on Simulator/Emulator
-
-### iOS Simulator
-
-```bash
-# Start on iOS
-npx expo start --ios
-
-# Or press 'i' after running npx expo start
-```
-
-### Android Emulator
-
-```bash
-# Start on Android
-npx expo start --android
-
-# Or press 'a' after running npx expo start
-```
-
-## Step 7: Run on Physical Device
-
-### Using Expo Go App
-
-1. **Install Expo Go**
-   - iOS: [Download from App Store](https://apps.apple.com/app/expo-go/id982107779)
-   - Android: [Download from Google Play](https://play.google.com/store/apps/details?id=host.exp.exponent)
-
-2. **Connect to Same Network**
-   - Ensure your phone and computer are on the same Wi-Fi network
-
-3. **Scan QR Code**
-   - Run `npx expo start`
-   - iOS: Use Camera app to scan QR code
-   - Android: Use Expo Go app to scan QR code
-
-### Using USB Connection (Development Build)
-
-For faster performance, create a development build:
-
-```bash
-# Install EAS CLI
-npm install -g eas-cli
-
-# Login to Expo
-eas login
-
-# Configure project
-eas build:configure
-
-# Create development build for iOS
-eas build --profile development --platform ios
-
-# Create development build for Android
-eas build --profile development --platform android
-```
-
-## Troubleshooting
-
-### Node.js Issues
-
-**Error: Node version not supported**
-```bash
-# Install Node Version Manager (nvm)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-
-# Install Node 18
-nvm install 18
-nvm use 18
-```
-
-### Metro Bundler Issues
-
-**Error: Metro bundler failed to start**
-```bash
-# Clear cache
-npx expo start -c
-
-# Or manually clear
-rm -rf node_modules
-rm -rf .expo
-npm install
-```
-
-### iOS Simulator Issues
-
-**Simulator not opening**
-```bash
-# Reset simulator
-xcrun simctl shutdown all
-xcrun simctl erase all
-
-# Select Xcode command line tools
-sudo xcode-select --switch /Applications/Xcode.app
-```
-
-**Build fails on iOS**
-```bash
-cd ios
-pod deintegrate
-pod install
-cd ..
-npx expo start --ios
-```
-
-### Android Emulator Issues
-
-**Emulator not connecting**
-```bash
-# Check ADB devices
-adb devices
-
-# Restart ADB server
-adb kill-server
-adb start-server
-
-# Reverse port for Metro
-adb reverse tcp:8081 tcp:8081
-```
-
-**Build fails on Android**
-```bash
-# Clear gradle cache
-cd android
-./gradlew clean
-cd ..
-
-# Clear build folder
-rm -rf android/app/build
-```
-
-### Expo Issues
-
-**Error: Expo SDK version mismatch**
-```bash
-# Update Expo SDK
-npx expo install expo@latest
-
-# Update all Expo packages
-npx expo install --fix
-```
-
-**Error: Module not found**
-```bash
-# Clear watchman cache (Mac only)
-watchman watch-del-all
-
-# Clear Metro cache
-npx expo start -c
-```
-
-### Network Issues
-
-**Cannot connect to development server**
-1. Ensure phone and computer on same Wi-Fi
-2. Check firewall settings
-3. Try connecting via LAN option in Expo Go
-4. Use tunnel mode: `npx expo start --tunnel`
-
+The API key identifies the app to Trello. The token obtained at login is stored on-device and injected into every request automatically.
 
 ## Verification
 
-After installation, verify everything works:
-
-```bash
-# 1. Start development server
-npx expo start
-
-# 2. Run on iOS (Mac only)
-npx expo start --ios
-
-# 3. Run on Android
-npx expo start --android
-
-# 4. Check for errors in terminal
-# Should see "Metro waiting on..." message
+```mermaid
+flowchart TD
+    Install[Install Done] --> Start[Expo Start]
+    Start --> Open[Open App]
+    Open --> Login[Login Screen]
+    Login --> Workspaces[Workspaces Load]
 ```
 
-## Next Steps
+You are done when the login screen appears, OAuth returns a token, and the workspace list loads.
 
-After successful installation:
+## Troubleshooting
 
-1. Read [QUICKSTART.md](./QUICKSTART.md) for a 5-minute getting started guide
-2. Review [ARCHITECTURE.md](./ARCHITECTURE.md) to understand the codebase
-3. Check [API_INTEGRATION.md](./API_INTEGRATION.md) for Trello API setup
-4. See [DEVELOPMENT.md](./DEVELOPMENT.md) for development workflow
-
-## Getting Help
-
-If you encounter issues:
-
-1. Check this troubleshooting section
-2. Search [GitHub Issues](https://github.com/yourusername/trelltech/issues)
-3. Review [Expo Documentation](https://docs.expo.dev/)
-4. Contact the development team
-
-## Additional Resources
-
-- [React Native Environment Setup](https://reactnative.dev/docs/environment-setup)
-- [Expo Installation](https://docs.expo.dev/get-started/installation/)
-- [Android Studio Setup](https://developer.android.com/studio/install)
-- [Xcode Setup](https://developer.apple.com/xcode/)
+| Problem | Fix |
+|---------|-----|
+| Metro bundler errors | Stop Expo, run `npx expo start -c` to clear cache |
+| OAuth never returns | Check `EXPO_PUBLIC_OAUTH_CALLBACK` matches the app scheme |
+| 401 on every call | Log out and back in to refresh the stored token |
+| Native build issues | Use Expo Go or EAS Build instead of bare native builds |

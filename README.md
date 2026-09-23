@@ -1,129 +1,110 @@
 # TrellTech
 
-A cross-platform mobile client for Trello built with **React Native**, **Expo Router**, and **NativeWind**. TrellTech lets you manage workspaces, boards, lists, cards, members, and comments with a dark-themed, gesture-friendly interface.
+A cross-platform Trello client built with React Native and Expo, plus an Automation Studio that builds full boards from a markdown plan.
 
-## What this project demonstrates
+![version](https://img.shields.io/badge/version-1.0.0-blue) ![license](https://img.shields.io/badge/license-MIT-green) ![expo](https://img.shields.io/badge/expo-SDK%2054-black)
 
-- **Clean mobile architecture**: presentation (`app/`, `components/`) is separated from domain services (`services/`) and shared utilities (`utils/`, `lib/`).
-- **Single HTTP client**: all Trello API calls go through one authenticated Axios client with request/response normalization.
-- **Reusable UI system**: shared primitives for drawers, avatars, empty states, form actions, and loading spinners.
-- **OAuth integration**: Trello authentication via `expo-web-browser` and `expo-auth-session`, with secure token storage in AsyncStorage.
-- **Automation tooling**: board creation from markdown, branch-name comments, and resource-card injection.
-
-## Tech stack
-
-| Layer | Technology |
-|-------|------------|
-| Framework | React Native + Expo SDK 54 |
-| Routing | Expo Router (file-based) |
-| Styling | NativeWind / TailwindCSS |
-| State | React Context (`AuthContext`) + local component state |
-| HTTP | Axios + custom `services/api/client.js` |
-| Storage | `@react-native-async-storage/async-storage` |
-| Icons | `@expo/vector-icons`, `lucide-react-native` |
-
-## Architecture
-
-```
-app/                 — Expo Router screens (presentation only)
-components/
-  ui/                — Shared primitives (BottomDrawer, Button, Input, EmptyState, MemberAvatar, FormActions, ...)
-  home/              — Home screen pieces
-  boards/            — Board list pieces
-  boardDetail/       — Board detail pieces
-  cards/             — Card detail / create / update pieces
-  workspace/         — Workspace pieces
-  automation/        — Automation Studio pieces
-contexts/            — React contexts (Auth only)
-services/
-  api/               — HTTP client, auth interceptor, typed errors
-  boards.js          — Board API facade
-  lists.js           — List API facade
-  cards.js           — Card API facade
-  workspaces.js      — Workspace API facade
-  members.js         — Member API facade
-  auth.js            — OAuth + current user
-  localStorage.js    — AsyncStorage wrapper
-lib/
-  validation.js      — Shared validators
-utils/               — Domain helpers (markdown parser, templates, colors, branch names)
-```
-
-All service functions return a consistent shape:
-
-```ts
-{ success: boolean; data?: T; error?: string }
-```
-
-## Getting started
-
-### Prerequisites
-
-- Node.js 18+
-- npm 9+
-- iOS Simulator (macOS) or Android Emulator
-
-### Environment
-
-Create a `.env` file at the project root:
-
-```bash
-EXPO_PUBLIC_APP_NAME=TrellTech
-EXPO_PUBLIC_API_BASE_URL=https://api.trello.com/1
-EXPO_PUBLIC_TRELLTECH_API_KEY=your_trello_key
-EXPO_PUBLIC_TRELLTECH_API_SECRET=your_trello_secret
-EXPO_PUBLIC_OAUTH_CALLBACK=exp://localhost:8081/--/auth
-EXPO_PUBLIC_SCOPES=read,write
-```
-
-### Install and run
+## Quick Start
 
 ```bash
 npm install
-npm test        # run the test suite
-npm run lint    # run ESLint
-npx expo start  # start the development server
+cp .env.example .env   # fill in Trello API key and OAuth values
+npx expo start
 ```
 
-## Scripts
+Then open the app with Expo Go, an emulator, or `npm run android` / `npm run ios`.
 
-```bash
-npm start       # expo start
-npm test        # jest --ci
-npm run lint    # expo lint
-npm run android # expo start --android
-npm run ios     # expo start --ios
-```
+## Key Features
 
-## Testing
+- Trello OAuth login with persistent session
+- Browse workspaces, boards, lists, and cards
+- Create, edit, and archive boards, lists, and cards
+- Card comments, due dates, and member management
+- Automation Studio: generate boards from markdown, branch comments, resource cards
+- Dark-themed gesture-friendly mobile UI
 
-The project ships with integration tests covering the authentication flow and board-detail service contracts:
+## Tech Stack
 
-```bash
-npm test
-```
+- React Native 0.81.5, React 19.1, Expo SDK 54, expo-router 6
+- Axios, NativeWind 4, AsyncStorage
+- Trello REST API (external), Jest + React Native Testing Library
 
-## Screenshots
+## Deployment Status
 
-See the [docs/screenshots](./docs/screenshots) folder for app previews.
+[Standalone Application] — see [docs/INSTALLATION.md](docs/INSTALLATION.md) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Documentation
 
-- [Architecture Overview](./docs/ARCHITECTURE.md)
-- [Installation Guide](./docs/INSTALLATION.md)
-- [Quick Start](./docs/QUICKSTART.md)
-- [API Integration](./docs/API_INTEGRATION.md)
-- [Contributing](./docs/CONTRIBUTING.md)
+- [Architecture](docs/ARCHITECTURE.md) — system design and project tree
+- [Features](docs/FEATURES.md) — feature catalog with user flows
+- [Database](docs/DATABASE.md) — Trello entities and local storage
+- [Testing Strategy](docs/TESTING_STRATEGY.md) — how quality is ensured
+- [Page Listing](docs/PAGE_LISTING.md) — all screens and routes
+- [Charts Provider](docs/CHARTS_PROVIDER.md) — every diagram in one place
+- [Modules](docs/modules/) — deep dives per feature area
+- [User Guides](docs/user-guides/) — step-by-step usage guides
 
-## Authors
+## License & Contributing
 
-Built by the Mobomobilo team:
+MIT. See `LICENSE` if present. Contributions are welcome — open an issue or a pull request describing the change first.
 
-- **Leroi Kakatsi** — [Portfolio](https://kingweb.pythonanywhere.com)
-- **Joel Houinsavi** — [Portfolio](https://paqo.net/Auteur)
-- **Regina Dokponou** — [LinkedIn](https://www.linkedin.com/in/regina-dokponou-61a343312)
-- **Waren Konnon** — [LinkedIn](https://www.linkedin.com/in/waren-konnon-651095310)
+## Developed By
 
-## License
+**Leroi Kakatsi**
 
-MIT — see [LICENSE](./LICENSE.txt).
+- Email: [leroi.kakatsi@epitech.eu](mailto:leroi.kakatsi@epitech.eu)
+- WhatsApp: [+233 53 561 0908](https://wa.me/233535610908)
+- Portfolio: [king-kakatsi.netlify.app](https://king-kakatsi.netlify.app)
+
+
+**Joel Houinsavi**
+- Email: [joel.houinsavi@epitech.eu](joel.houinsavi@epitech.eu)
+- WhatsApp: [+229 01 97 70 38 37](https://wa.me/2290197703837)
+- Portfolio: [www.paqo.net](https://paqo.net/Auteur)
+
+**Regina Dokponou**
+- Email: [regina.dokponou@epitech.eu](regina.dokponou@epitech.eu)
+- **WhatsApp**: [+221 01 94 42 82 15](https://wa.me/22101 94 42 82 15)
+- **Portfolio**: [regina-dokponou.linkedin](https://www.linkedin.com/in/regina-dokponou-61a343312)
+
+### Waren Konnon
+- **Email**: waren.konnon@epitech.eu
+- **WhatsApp**: +229 01 61 62 32 32
+- **Portfolio**: [waren-konnon.linkedin](https://www.linkedin.com/in/waren-konnon-651095310)
+
+
+
+## Screenshots
+
+### Login page
+![login](./docs/screenshots/trelltech_login.jpeg)
+
+### User connexion to trello app
+![Authentification](./docs/screenshots/trelltech_oauth.jpeg)
+
+### User profile
+![Workspaces list](./docs/screenshots/trelltech_profile.jpeg)
+
+### Home & Workspaces
+![Workspaces list](./docs/screenshots/trelltech_workspaces.jpeg)
+
+### Management of workspace members 
+![action for Workspace members](./docs/screenshots/trelltech_board_action.jpeg)
+
+### Action on workspace 
+![workspace action](./docs/screenshots/trelltech_workspace_action.jpeg)
+
+### User boards
+![Boards](./docs/screenshots/trelltech_boards.jpeg)
+
+### Board creation
+![board creation form ](./docs/screenshots/trelltech_add_board.jpeg)
+
+
+### User board detail
+![Board detail ](./docs/screenshots/trelltech_board.jpeg)
+
+
+### Management of board members 
+![action for board members](./docs/screenshots/trelltech_manage_board_members.jpeg)
+

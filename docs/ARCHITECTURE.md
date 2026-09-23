@@ -1,85 +1,95 @@
-# Trelltech — Architecture Overview
+# Architecture
 
-This document describes the target architecture after the portfolio refactor. The goal is a codebase that is easy to navigate, test, and extend.
+TrellTech is a client-only Expo mobile app. Screens call domain services, services call one authenticated axios client, and that client calls the Trello REST API. There is no custom backend.
 
-## Layer map
+## Project Tree
 
-```
-app/                 — Expo Router screens (presentation / routing only)
-components/
-  ui/                — Reusable primitives (BottomDrawer, Button, Input, EmptyState, MemberAvatar, FormActions, LoadingSpinner)
-  home/              — Home screen pieces
-  boards/            — Board list pieces
-  boardDetail/       — Board detail pieces
-  cards/             — Card detail / create / update pieces
-  workspace/         — Workspace pieces
-  automation/        — Automation Studio pieces (split from create-board.jsx)
-contexts/            — React contexts (Auth only)
-services/
-  api/               — HTTP client, auth interceptor, typed errors
-  boards.js          — Board API facade
-  lists.js           — List API facade
-  cards.js           — Card API facade
-  workspaces.js      — Workspace API facade
-  members.js         — Member API facade
-  auth.js            — OAuth + current user
-  localStorage.js    — AsyncStorage wrapper
-  index.js           — Optional barrel export
-lib/
-  validation.js      — Shared validators (required, url, email, ...)
-utils/               — Domain helpers (markdown parser, templates, colors, branch names)
-  markdown/          — Parser / labels / checklists / cards / sync
-  trello/            — retry / throttle helpers
-__tests__/           — Integration / unit tests
+```text
+trelltech/
+├── app/                 # expo-router screens (presentation only)
+├── components/          # reusable UI (ui, boards, cards, home, workspace, automation)
+├── contexts/            # AuthContext session store
+├── hooks/               # automation hooks (logs, board builder, branch tools)
+├── services/            # api client + boards, lists, cards, workspaces, members, auth
+├── utils/               # markdown parser, branch names, theme, retry helpers
+├── lib/                 # shared validators
+├── styles/              # screen styles
+└── __tests__/           # integration tests
 ```
 
-## Service contract
+`app` renders UI, `services` owns all network access, `utils` owns pure logic, and `contexts` owns session state. Full tree: [PROJECT_TREE.md](./architecture/PROJECT_TREE.md).
 
-All service functions return:
+## Architecture Diagram
 
-```ts
-{ success: boolean; data?: T; error?: string }
+```mermaid
+flowchart TD
+    User[User] -->|Tap and Type| Screens[Expo Router Screens]
+    Screens -->|Compose| UIComponents[Components and Hooks]
+    UIComponents -->|Call Facade| Services[Domain Services]
+    Services -->|GET POST PUT DELETE| ApiClient[Axios Client]
+    ApiClient -->|Key Plus Token| TrelloApi[Trello REST API]
+    TrelloApi -->|JSON| ApiClient
+    ApiClient -->|Success Data Error| Services
+    Services -->|Plain Data| UIComponents
+    UIComponents -->|Render| Screens
+    AuthCtx[AuthContext] -->|Session| Screens
+    LocalStore[AsyncStorage] -->|Token| AuthCtx
 ```
 
-Never throw plain strings. Network errors are normalized to the above shape by the HTTP client.
+## Component Interaction
 
-## HTTP client
+```mermaid
+flowchart TD
+    BoardScreen[Board Detail Screen] -->|Load| BoardSvc[Boards Service]
+    BoardScreen -->|Load| ListSvc[Lists Service]
+    BoardScreen -->|Render Columns| Kanban[Kanban Columns]
+    Kanban -->|Load| CardSvc[Cards Service]
+    CardDetail[Card Detail] -->|Load| CardSvc
+    CardDetail -->|Members| MemberSvc[Members Service]
+    AutoStudio[Automation Studio] -->|Build| BoardBuilder[Board Builder Hook]
+    BoardBuilder -->|Orchestrate| MdSync[Markdown Sync]
+    MdSync -->|Create| BoardSvc
+    MdSync -->|Create| ListSvc
+    MdSync -->|Create| CardSvc
+```
 
-- `services/api/client.js` wraps axios.
-- Base URL and `key` param are injected centrally.
-- A request interceptor reads `trello_token` from AsyncStorage and injects the `token` param.
-- No manual `?key=...&token=...` string concatenation lives outside the interceptor.
+## Layer Interaction
 
-## Authentication
+```mermaid
+flowchart TD
+    Present[Presentation app and components] -->|Calls| AppLogic[Application hooks and context]
+    AppLogic -->|Calls| Domain[Domain services]
+    Domain -->|Calls| HttpClient[HTTP client]
+    HttpClient -->|Calls| External[Trello API]
+    External -->|Returns| HttpClient
+    HttpClient -->|Normalizes| Domain
+    Domain -->|Returns Data| AppLogic
+    AppLogic -->|Renders| Present
+```
 
-- `services/auth.js` owns `authenticate()` and `getCurrentUser()`.
-- `contexts/AuthContext.jsx` consumes only those named exports.
-- The token is always read by the interceptor; services never call `fetchFromLocalStorage('trello_token')` directly.
+## Component Breakdown
 
-## Validation
+- **Screens (`app`)**. Own navigation and layout only. Each screen loads data through services, keeps local UI state, and renders components. No screen builds URLs or tokens directly.
+- **UI components (`components`)**. Small focused pieces such as drawers, avatars, board cards, and kanban columns. Shared primitives in `components/ui` keep the look consistent and remove duplication.
+- **Hooks (`hooks`)**. Hold Automation Studio state and side effects: log streaming, board building, and branch tools. They wrap service calls so the screen stays thin.
+- **Services (`services`)**. One module per Trello domain with a uniform `{success, data, error}` return shape. Compatibility barrels keep old import paths working.
+- **Utilities (`utils`, `lib`)**. Pure logic with no UI: markdown parsing, branch-name generation, retry and throttle helpers, theme colors, and form validators.
 
-- `lib/validation.js` exposes `required(value, fieldName)` and `validateUrl(url)`.
-- Screens use these helpers before calling services; inline validation duplication is avoided.
+## Technology Decisions
 
-## Naming conventions
+| Choice | Why |
+|--------|-----|
+| Expo Router | File-based navigation fits a screen-per-resource Trello model |
+| Single axios client | One place for base URL, token injection, and error normalization |
+| Service facades | Screens stay simple and every API error has the same shape |
+| AuthContext | Session is the only true global state, so Context is enough |
+| NativeWind | Shared utility styling without a heavy component library |
+| AsyncStorage | Only the token and onboarding flag need persistence |
 
-- English everywhere: file names, variables, comments, user-facing messages.
-- Components: PascalCase files export default PascalCase.
-- Services/helpers: camelCase files export named functions.
-- Avoid abbreviations except universally known ones (`id`, `desc` is OK when matching the external API).
+## Design Patterns
 
-## Styling
-
-- NativeWind/Tailwind only.
-- Shared colors live in `utils/theme.js`.
-- Shared layout primitives live in `components/ui/`.
-
-## Dead-code policy
-
-- Empty files are deleted.
-- Commented-out blocks are removed.
-- Unused imports are cleaned by lint.
-
-## Tests
-
-- `npm test` and `npm run lint` must pass before a change is considered complete.
+- **Facade**: `services/boards.js`, `lists.js`, `cards.js` hide Trello endpoints behind simple functions.
+- **Interceptor**: the axios request interceptor injects key and token on every call.
+- **Provider**: `AuthContext` supplies session to the whole tree.
+- **Custom hooks**: `useBoardBuilder` and friends extract Automation Studio logic from the screen.
+- **Barrel**: compatibility re-exports let old imports keep working after the split.
