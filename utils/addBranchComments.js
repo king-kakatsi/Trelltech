@@ -1,171 +1,100 @@
-/**
- * Utility to add branch name comments to Trello cards
- * 
- * This script adds a comment to each card with the expected branch name
- * following Angular commit convention (feat/, fix/, etc.)
- */
+import { addComment, getCardComments, updateComment } from '../services/cards';
+import { getCardsInList } from '../services/cards';
+import { getBoardLists } from '../services/lists';
+import { createThrottler } from './trello/throttle';
+import { generateBranchName } from './branchNames';
 
-import { addComment, getCardComments, updateComment } from '../services/trello';
-import { fetchFromLocalStorage } from '../services/localStorageService';
-import { getBoardLists } from '../services/boardService';
-import { getCardsInList } from '../services/card';
+const BRANCH_PREFIX = 'Branch:';
+// Unicode for the historical branch emoji used in legacy comments.
+const BRANCH_EMOJI = '\u{1F33F}';
 
-// %%%%%%%% BRANCH NAME GENERATION %%%%%%%
+const throttle = createThrottler(300);
 
-/**
- * Generate branch name from card title
- * @param {string} cardTitle - Card title
- * @returns {string} Branch name
- */
-function generateBranchName(cardTitle) {
-  // Remove quotes and special characters
-  let branch = cardTitle
-    .replace(/"/g, '')
-    .replace(/[^\w\s-]/g, '')
-    .toLowerCase()
-    .trim();
-
-  // Remove common prefixes
-  branch = branch
-    .replace(/^(orders?\s*&\s*cart|cart\s*&\s*orders?)\s*/i, 'orders-cart-')
-    .replace(/^(order\s*entity|orders?)\s*/i, 'order-')
-    .replace(/^(product\s*listing|productlisting)\s*/i, 'product-listing-')
-    .replace(/^(stores?)\s*/i, 'store-')
-    .replace(/^(payment|payments?)\s*/i, 'payment-')
-    .replace(/^(escrow)\s*/i, 'escrow-')
-    .replace(/^(auction|auctions?)\s*/i, 'auction-')
-    .replace(/^(bid|bidding|bids?)\s*/i, 'bid-')
-    .replace(/^(search)\s*/i, 'search-')
-    .replace(/^(dashboard)\s*/i, 'dashboard-')
-    .replace(/^(review|reviews?)\s*/i, 'review-')
-    .replace(/^(admin)\s*/i, 'admin-')
-    .replace(/^(notification|notifications?)\s*/i, 'notification-')
-    .replace(/^(weekend\s*work|weekend)\s*/i, 'weekend-')
-    .replace(/^(week\s*\d+)\s*/i, 'week-')
-    .replace(/\s*-\s*week\s*\d+/i, '');
-
-  // Determine prefix based on content
-  let prefix = 'feat';
-  const lowerTitle = cardTitle.toLowerCase();
-  
-  if (lowerTitle.includes('bug') || lowerTitle.includes('fix')) {
-    prefix = 'fix';
-  } else if (lowerTitle.includes('refactor')) {
-    prefix = 'refactor';
-  } else if (lowerTitle.includes('test') || lowerTitle.includes('testing')) {
-    prefix = 'test';
-  } else if (lowerTitle.includes('doc') || lowerTitle.includes('documentation')) {
-    prefix = 'docs';
-  } else if (lowerTitle.includes('review') || lowerTitle.includes('weekend')) {
-    prefix = 'chore';
-  }
-
-  // Clean up and format
-  branch = branch
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .substring(0, 50); // Limit length
-
-  return `${prefix}/${branch}`;
+function formatBranchComment(branchName) {
+  return `${BRANCH_PREFIX} \`${branchName}\``;
 }
 
-// %%%%%%%% END - BRANCH NAME GENERATION %%%%%%%
+function findBranchComment(comments) {
+  return comments.find((comment) => {
+    const text = comment.data?.text || comment.text || '';
+    return text.includes(BRANCH_PREFIX) || text.includes('branch:') || text.includes(BRANCH_EMOJI);
+  });
+}
 
-// %%%%%%%% COMMENT ADDING FUNCTIONS %%%%%%%
-
-/**
- * Add branch name comment to a card
- * @param {string} cardId - Card ID
- * @param {string} branchName - Branch name
- * @returns {Promise<boolean>} Success status
- */
 async function addBranchComment(cardId, branchName) {
-  try {
-    const token = await fetchFromLocalStorage('trello_token');
-    if (!token) throw new Error('No token found');
-
-    const commentText = `Branch: \`${branchName}\``;
-    const result = await addComment(cardId, token, commentText);
-    
-    return result !== null;
-  } catch (error) {
-    console.error(`Error adding comment to card ${cardId}:`, error);
-    return false;
-  }
+  const commentText = formatBranchComment(branchName);
+  const response = await addComment(cardId, commentText);
+  return response.success;
 }
 
-/**
- * Check if card already has a branch comment
- * @param {string} cardId - Card ID
- * @returns {Promise<object|null>} Existing comment or null
- */
+async function updateBranchComment(cardId, commentId, branchName) {
+  const commentText = formatBranchComment(branchName);
+  const response = await updateComment(cardId, commentId, commentText);
+  return response.success;
+}
+
 async function getExistingBranchComment(cardId) {
-  try {
-    const token = await fetchFromLocalStorage('trello_token');
-    if (!token) return null;
+  const response = await getCardComments(cardId);
 
-    const comments = await getCardComments(cardId, token);
-    
-    // Find comment that starts with "Branch:" or "🌿 Branch:"
-    // Trello API returns comments as actions, text is in action.data.text
-    const branchComment = comments.find(comment => {
-      const text = comment.data?.text || comment.text || '';
-      return text.includes('Branch:') || text.includes('branch:') || text.includes('🌿');
-    });
-
-    return branchComment || null;
-  } catch (error) {
-    console.error(`Error checking comments for card ${cardId}:`, error);
+  if (!response.success) {
     return null;
   }
+
+  return findBranchComment(response.data) || null;
 }
 
-/**
- * Update existing branch comment to remove emoji
- * @param {string} cardId - Card ID
- * @param {string} commentId - Comment ID
- * @param {string} branchName - Branch name
- * @returns {Promise<boolean>} Success status
- */
-async function updateBranchComment(cardId, commentId, branchName) {
-  try {
-    const token = await fetchFromLocalStorage('trello_token');
-    if (!token) throw new Error('No token found');
+async function loadBoardCards(boardId) {
+  const listsResponse = await getBoardLists(boardId);
 
-    const commentText = `Branch: \`${branchName}\``;
-    const result = await updateComment(cardId, commentId, token, commentText);
-    
-    if (result === null) {
-      console.error(`Update returned null for card ${cardId}, comment ${commentId}`);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error(`Error updating comment for card ${cardId}, comment ${commentId}:`, error);
-    console.error(`Error details:`, error.message || error);
-    return false;
+  if (!listsResponse.success) {
+    throw new Error(listsResponse.error || 'Failed to load board lists');
   }
+
+  const cardsByList = [];
+
+  for (const list of listsResponse.data) {
+    const cardsResponse = await getCardsInList(list.id);
+
+    if (!cardsResponse.success) {
+      throw new Error(cardsResponse.error || `Failed to load cards for list ${list.name}`);
+    }
+
+    cardsByList.push({ list, cards: cardsResponse.data });
+  }
+
+  return cardsByList;
+}
+
+async function processCard(card, { skipWeek1, updateExisting }) {
+  if (skipWeek1 && card.name.toLowerCase().includes('week 1')) {
+    return { status: 'skipped' };
+  }
+
+  const branchName = generateBranchName(card.name);
+  const existingComment = await getExistingBranchComment(card.id);
+
+  if (existingComment) {
+    const commentText = existingComment.data?.text || existingComment.data?.comment?.text || existingComment.text || '';
+    const expectedText = formatBranchComment(branchName);
+
+    if (updateExisting && (commentText.includes(BRANCH_EMOJI) || commentText.trim() !== expectedText)) {
+      const success = await updateBranchComment(card.id, existingComment.id, branchName);
+      return success ? { status: 'updated' } : { status: 'error', name: card.name };
+    }
+
+    return { status: 'unchanged' };
+  }
+
+  const success = await addBranchComment(card.id, branchName);
+  return success ? { status: 'added' } : { status: 'error', name: card.name };
 }
 
 /**
- * Add branch comments to all cards in a board
- * @param {string} boardId - Board ID
- * @param {boolean} skipWeek1 - Skip Week 1 cards
- * @param {boolean} updateExisting - Update existing comments to remove emojis
- * @returns {Promise<object>} Results summary
+ * Add branch name comments to all cards in a board.
  */
 export async function addBranchCommentsToBoard(boardId, skipWeek1 = false, updateExisting = true) {
   try {
-    console.log('🚀 Starting to add branch comments...\n');
-
-    const token = await fetchFromLocalStorage('trello_token');
-    if (!token) throw new Error('No token found');
-
-    // Get all lists
-    const lists = await getBoardLists(boardId);
-    console.log(`Found ${lists.length} lists\n`);
+    const cardsByList = await loadBoardCards(boardId);
 
     let totalCards = 0;
     let commentedCards = 0;
@@ -173,77 +102,19 @@ export async function addBranchCommentsToBoard(boardId, skipWeek1 = false, updat
     let skippedCards = 0;
     const errors = [];
 
-    // Process each list
-    for (const list of lists) {
-      try {
-        const cards = await getCardsInList(list.id);
-        console.log(`\nProcessing list: ${list.name} (${cards.length} cards)`);
+    for (const { list, cards } of cardsByList) {
+      for (const card of cards) {
+        totalCards++;
+        await throttle();
 
-        for (const card of cards) {
-          totalCards++;
+        const result = await processCard(card, { skipWeek1, updateExisting });
 
-          // Skip Week 1 cards if requested
-          if (skipWeek1 && card.name.toLowerCase().includes('week 1')) {
-            console.log(`  ⏭️  Skipped (Week 1): ${card.name}`);
-            skippedCards++;
-            continue;
-          }
-
-          const branchName = generateBranchName(card.name);
-          
-          // Check if card already has a branch comment
-          const existingComment = await getExistingBranchComment(card.id);
-          
-          if (existingComment) {
-            // Update existing comment to remove emoji if needed
-            const commentText = existingComment.data?.text || existingComment.data?.comment?.text || existingComment.text || '';
-            const expectedText = `Branch: \`${branchName}\``;
-            
-            // Update if it has emoji or doesn't match expected format
-            if (updateExisting && (commentText.includes('🌿') || commentText.trim() !== expectedText)) {
-              const success = await updateBranchComment(card.id, existingComment.id, branchName);
-              if (success) {
-                console.log(`  ↻ Updated branch comment: ${card.name} → ${branchName}`);
-                updatedCards++;
-              } else {
-                console.log(`  ✗ Failed to update: ${card.name}`);
-                errors.push(card.name);
-              }
-            } else {
-              console.log(`  ⊙ Already has correct branch comment: ${card.name}`);
-            }
-          } else {
-            // Add new comment - card doesn't have a branch comment yet
-            try {
-              const success = await addBranchComment(card.id, branchName);
-              if (success) {
-                console.log(`  ✓ Added branch comment: ${card.name} → ${branchName}`);
-                commentedCards++;
-              } else {
-                console.log(`  ✗ Failed to add comment: ${card.name}`);
-                errors.push(card.name);
-              }
-            } catch (error) {
-              console.error(`  ✗ Error adding comment to ${card.name}:`, error.message || error);
-              errors.push(card.name);
-            }
-          }
-
-          // Delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-      } catch (error) {
-        console.error(`Error processing list ${list.name}:`, error);
-        errors.push(`List: ${list.name}`);
+        if (result.status === 'skipped') skippedCards++;
+        else if (result.status === 'updated') updatedCards++;
+        else if (result.status === 'added') commentedCards++;
+        else if (result.status === 'error') errors.push(result.name);
       }
     }
-
-    console.log(`\n✅ Completed!`);
-    console.log(`  Total cards: ${totalCards}`);
-    console.log(`  New comments: ${commentedCards}`);
-    console.log(`  Updated comments: ${updatedCards}`);
-    console.log(`  Skipped: ${skippedCards}`);
-    console.log(`  Errors: ${errors.length}`);
 
     return {
       success: true,
@@ -251,95 +122,66 @@ export async function addBranchCommentsToBoard(boardId, skipWeek1 = false, updat
       commentedCards,
       updatedCards,
       skippedCards,
-      errors
+      errors,
     };
   } catch (error) {
-    console.error('Error adding branch comments:', error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
 
 /**
- * Remove emojis from existing branch comments
- * @param {string} boardId - Board ID
- * @returns {Promise<object>} Results summary
+ * Remove emojis and normalize existing branch comments.
  */
 export async function removeEmojisFromComments(boardId) {
   try {
-    console.log('🚀 Starting to remove emojis from branch comments...\n');
-
-    const token = await fetchFromLocalStorage('trello_token');
-    if (!token) throw new Error('No token found');
-
-    // Get all lists
-    const lists = await getBoardLists(boardId);
-    console.log(`Found ${lists.length} lists\n`);
+    const cardsByList = await loadBoardCards(boardId);
 
     let totalCards = 0;
     let updatedCards = 0;
     const errors = [];
 
-    // Process each list
-    for (const list of lists) {
-      try {
-        const cards = await getCardsInList(list.id);
-        console.log(`\nProcessing list: ${list.name} (${cards.length} cards)`);
+    for (const { cards } of cardsByList) {
+      for (const card of cards) {
+        totalCards++;
+        await throttle();
 
-        for (const card of cards) {
-          totalCards++;
+        const existingComment = await getExistingBranchComment(card.id);
 
-          // Check if card has a branch comment with emoji
-          const existingComment = await getExistingBranchComment(card.id);
-          
-          if (existingComment) {
-            const commentText = existingComment.data?.text || existingComment.text || '';
-            if (commentText.includes('🌿') || (commentText.includes('Branch:') && commentText !== `Branch: \`${generateBranchName(card.name)}\``)) {
-              const branchName = generateBranchName(card.name);
-              const success = await updateBranchComment(card.id, existingComment.id, branchName);
-              
-              if (success) {
-                console.log(`  ↻ Removed emoji from: ${card.name}`);
-                updatedCards++;
-              } else {
-                console.log(`  ✗ Failed to update: ${card.name} (Comment ID: ${existingComment.id})`);
-                errors.push(card.name);
-              }
-            }
-          }
-
-          // Delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 300));
+        if (!existingComment) {
+          continue;
         }
-      } catch (error) {
-        console.error(`Error processing list ${list.name}:`, error);
-        errors.push(`List: ${list.name}`);
+
+        const commentText = existingComment.data?.text || existingComment.text || '';
+        const branchName = generateBranchName(card.name);
+        const expectedText = formatBranchComment(branchName);
+
+        if (commentText.includes(BRANCH_EMOJI) || commentText !== expectedText) {
+          const success = await updateBranchComment(card.id, existingComment.id, branchName);
+
+          if (success) {
+            updatedCards++;
+          } else {
+            errors.push(card.name);
+          }
+        }
       }
     }
-
-    console.log(`\n✅ Completed!`);
-    console.log(`  Total cards: ${totalCards}`);
-    console.log(`  Updated: ${updatedCards}`);
-    console.log(`  Errors: ${errors.length}`);
 
     return {
       success: true,
       totalCards,
       updatedCards,
-      errors
+      errors,
     };
   } catch (error) {
-    console.error('Error removing emojis:', error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 }
 
-// %%%%%%%% END - COMMENT ADDING FUNCTIONS %%%%%%%
-
-export { generateBranchName, addBranchComment, getExistingBranchComment, updateBranchComment };
-
+export { generateBranchName, getExistingBranchComment };
