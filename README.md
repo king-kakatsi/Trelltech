@@ -64,13 +64,13 @@ MIT. See `LICENSE` if present. Contributions are welcome — open an issue or a 
 
 **Regina Dokponou**
 - Email: [regina.dokponou@epitech.eu](regina.dokponou@epitech.eu)
-- **WhatsApp**: [+221 01 94 42 82 15](https://wa.me/22101 94 42 82 15)
+- **WhatsApp**: [+221 01 94 42 82 15](https://wa.me/2210194428215)
 - **Portfolio**: [regina-dokponou.linkedin](https://www.linkedin.com/in/regina-dokponou-61a343312)
 
-### Waren Konnon
-- **Email**: waren.konnon@epitech.eu
-- **WhatsApp**: +229 01 61 62 32 32
-- **Portfolio**: [waren-konnon.linkedin](https://www.linkedin.com/in/waren-konnon-651095310)
+**Waren Konnon**
+- Email: [waren.konnon@epitech.eu](waren.konnon@epitech.eu)
+- WhatsApp: [+229 01 61 62 32 32](https://wa.me/2290161623232)
+- Portfolio: [waren-konnon.linkedin](https://www.linkedin.com/in/waren-konnon-651095310)
 
 
 
