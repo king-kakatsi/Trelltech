@@ -54,8 +54,7 @@ MIT. See `LICENSE` if present. Contributions are welcome — open an issue or a 
 
 - Email: [leroi.kakatsi@epitech.eu](mailto:leroi.kakatsi@epitech.eu)
 - WhatsApp: [+233 53 561 0908](https://wa.me/233535610908)
-- Portfolio: [king-kakatsi.netlify.app](https://king-kakatsi.netlify.app)
-
+- Portfolio: [king.kakatsi.com](https://king.kakatsi.com)
 
 **Joel Houinsavi**
 - Email: [joel.houinsavi@epitech.eu](joel.houinsavi@epitech.eu)
