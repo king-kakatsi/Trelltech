@@ -14,7 +14,6 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="workspace" />
           <Stack.Screen name="create-board" />
-          <Stack.Screen name="add-branch-comments" />
         </Stack>
       </AuthProvider>
     </SafeAreaProvider>
