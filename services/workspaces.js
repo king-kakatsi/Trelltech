@@ -1,148 +1,122 @@
-import { deleteAllWithApi, deleteWithApi, getFromApi, postWithApi, updateWithApi } from "./axiosService";
-import { fetchFromLocalStorage } from "./localStorageService";
+import { del, get, post, put } from './api';
 
-
-
-const apiKey = process.env.EXPO_PUBLIC_TRELLTECH_API_KEY;
-
+/**
+ * Get all workspaces for the current user.
+ */
 export async function getAllWorkspaces() {
-    try {
-        const token = await fetchFromLocalStorage('trello_token');
-        if (!token) throw 'No token found';
-        const endpoint = `/members/me/organizations?key=${apiKey}&token=${encodeURIComponent(token)}`;
-        const res = await getFromApi(endpoint);
-        return res;
-    } catch (error) {
-        console.error('Error fetching workspaces:', error);
-        throw error;
-    }
+  return get('/members/me/organizations', {
+    fields: 'id,displayName,name,desc,websiteUrl,url',
+  });
 }
 
-export async function getBoard(id) {
-    try {
-        const token = await fetchFromLocalStorage('trello_token');
-        if (!token) throw 'No token found';
-        const endpoint = `/boards/${id}?key=${apiKey}&token=${encodeURIComponent(token)}`;
-        const res = await getFromApi(endpoint);
-        return res;
-    } catch (error) {
-        console.error('Error fetching board:', error);
-        throw error;
-    }
+/**
+ * Get a single workspace.
+ */
+export async function getWorkspace(workspaceId) {
+  if (!workspaceId) {
+    return { success: false, error: 'Workspace ID is required' };
+  }
+
+  return get(`/organizations/${workspaceId}`, {
+    fields: 'id,displayName,name,desc,websiteUrl,url',
+  });
 }
 
-// Create a new board
-export const postWorkspace = async (displayName, options = {}) => {
-  
-    try {
-        const token = await fetchFromLocalStorage('trello_token');
-        if (!token) throw 'No token found';
+/**
+ * Create a workspace.
+ */
+export async function createWorkspace({ displayName, name, description = '', website = '' } = {}) {
+  if (!displayName || String(displayName).trim() === '') {
+    return { success: false, error: 'Display name is required' };
+  }
 
-        // build query params with displayName and any provided options
-        const params = [];
-        params.push(`displayName=${encodeURIComponent(displayName)}`);
-        if (options.desc !== undefined && options.desc !== null) {
-            params.push(`desc=${encodeURIComponent(options.desc)}`);
-        }
-        if (options.name !== undefined && options.name !== null) {
-            params.push(`name=${encodeURIComponent(options.name)}`);
-        }
-        if (options.website !== undefined && options.website !== null) {
-            params.push(`website=${encodeURIComponent(options.website)}`);
-        }
-        params.push(`key=${apiKey}`);
-        params.push(`token=${encodeURIComponent(token)}`);
+  const payload = {
+    displayName: String(displayName).trim(),
+    desc: String(description || '').trim(),
+  };
 
-        const endpoint = `/organizations?${params.join('&')}`;
+  if (name) payload.name = String(name).trim().toLowerCase();
+  if (website) payload.website = String(website).trim();
 
-        
-        const [success, data] = await postWithApi(endpoint);
-     
-        if (!success) throw data;
-        return data;
-    } catch (error) {
-        console.error('Error creating board:', error);
-        throw error;
-    }
-};
-
-export async function updateWorkspace(id, payload = {}) {
-    try {
-        const token = await fetchFromLocalStorage('trello_token');
-        if (!token) throw 'No token found';
-
-        const endpoint = `/organizations/${id}?key=${apiKey}&token=${encodeURIComponent(token)}`;
-        const [success, data] = await updateWithApi(endpoint, payload, { autoJoin: false });
-
-        if (!success) throw data;
-        return data;
-    } catch (error) {
-        console.error('Error updating workspace:', error);
-        throw error;
-    }
+  return post('/organizations', payload);
 }
 
-export async function deleteWorkspace(id) {
-    try {
-        const token = await fetchFromLocalStorage('trello_token');
-        if (!token) throw 'No token found';
-        const res = await deleteAllWithApi(`/organizations/${id}?key=${apiKey}&token=${token}`);
+/**
+ * Update a workspace.
+ */
+export async function updateWorkspace(workspaceId, { displayName, name, description, website } = {}) {
+  if (!workspaceId) {
+    return { success: false, error: 'Workspace ID is required' };
+  }
 
-        return res;
-    } catch (error) {
-        console.error('Error creating board:', error);
-        throw error;
-    }
+  const payload = {};
+  if (displayName !== undefined) payload.displayName = String(displayName).trim();
+  if (name !== undefined) payload.name = String(name).trim().toLowerCase();
+  if (description !== undefined) payload.desc = String(description).trim();
+  if (website !== undefined) payload.website = website ? String(website).trim() : '';
+
+  if (Object.keys(payload).length === 0) {
+    return { success: false, error: 'No fields to update' };
+  }
+
+  return put(`/organizations/${workspaceId}`, payload);
 }
 
-// Added: get members of a workspace (organization)
-export async function getWorkspaceMembers(id) {
-    try {
-        const token = await fetchFromLocalStorage('trello_token');
-        if (!token) throw 'No token found';
-        const endpoint = `/organizations/${id}/members?key=${apiKey}&token=${encodeURIComponent(token)}`;
-        
-        const res = await getFromApi(endpoint);
-        return res;
-    } catch (error) {
-        console.error('Error fetching workspace members:', error);
-        throw error;
-    }
+/**
+ * Delete a workspace.
+ */
+export async function deleteWorkspace(workspaceId) {
+  if (!workspaceId) {
+    return { success: false, error: 'Workspace ID is required' };
+  }
+
+  return del(`/organizations/${workspaceId}`);
 }
 
-// Add a member to a workspace (organization)
-export async function addMember(id, email, fullName) {
-    try {
-        const token = await fetchFromLocalStorage('trello_token');
-        if (!token) throw 'No token found';
+/**
+ * Get workspace members.
+ */
+export async function getWorkspaceMembers(workspaceId) {
+  if (!workspaceId) {
+    return { success: false, error: 'Workspace ID is required' };
+  }
 
-        const endpoint = `/organizations/${id}/members?email=${encodeURIComponent(email)}&fullName=${encodeURIComponent(fullName)}&key=${apiKey}&token=${encodeURIComponent(token)}`;
-    
-        
-        const [success, data] = await updateWithApi(endpoint, {}, { autoJoin: false });
-
-        if (!success) throw data;
-        return data;
-    } catch (error) {
-        console.error('Error adding member to workspace:', error);
-        throw error;
-    }
+  return get(`/organizations/${workspaceId}/members`, {
+    fields: 'id,fullName,username,avatarUrl,initials',
+  });
 }
 
-// remove a member from a workspace (organization)
-export async function deleteMember(id, idMember) {
-    try {
-        const token = await fetchFromLocalStorage('trello_token');
-        if (!token) throw 'No token found';
+/**
+ * Add a member to a workspace by email.
+ */
+export async function addWorkspaceMember(workspaceId, { email, fullName = '' } = {}) {
+  if (!workspaceId) {
+    return { success: false, error: 'Workspace ID is required' };
+  }
+  if (!email || String(email).trim() === '') {
+    return { success: false, error: 'Email is required' };
+  }
 
-        const endpoint = `/organizations/${id}/members/${idMember}?key=${apiKey}&token=${encodeURIComponent(token)}`;
-       
-        const [success, data] = await deleteWithApi(endpoint);
-
-        if (!success) throw data;
-        return data;
-    } catch (error) {
-        console.error('Error deleting member from workspace:', error);
-        throw error;
-    }
+  return put(`/organizations/${workspaceId}/members`, {
+    email: String(email).trim(),
+    fullName: String(fullName || '').trim(),
+    type: 'normal',
+  });
 }
+
+/**
+ * Remove a member from a workspace.
+ */
+export async function removeWorkspaceMember(workspaceId, memberId) {
+  if (!workspaceId || !memberId) {
+    return { success: false, error: 'Workspace ID and member ID are required' };
+  }
+
+  return del(`/organizations/${workspaceId}/members/${memberId}`);
+}
+
+// Legacy aliases for backwards compatibility.
+export { createWorkspace as postWorkspace };
+export { removeWorkspaceMember as deleteWorkspaceMember };
+export { removeWorkspaceMember as deleteMember };
+export { addWorkspaceMember as addMember };

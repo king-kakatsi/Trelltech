@@ -1,8 +1,16 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { fetchFromLocalStorage, removeFromLocalStorage, saveInLocalStorage } from '../services/localStorageService';
-import * as trelloService from '../services/trello';
+import { authenticate, getCurrentUser } from '../services/auth';
 
-const AuthContext = createContext({});
+const AuthContext = createContext({
+  user: null,
+  token: null,
+  isAuthenticated: false,
+  isLoading: true,
+  login: async () => false,
+  logout: async () => {},
+  refetchUser: async () => {},
+});
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -20,11 +28,12 @@ export function AuthProvider({ children }) {
       setToken(savedToken);
 
       try {
-        const userData = await trelloService.getCurrentUser(savedToken);
+        const userData = await getCurrentUser();
         setUser(userData);
       } catch (error) {
         await removeFromLocalStorage('trello_token');
         setToken(null);
+        setUser(null);
       }
     }
 
@@ -33,11 +42,11 @@ export function AuthProvider({ children }) {
 
   const login = async () => {
     try {
-      const newToken = await trelloService.authenticate();
+      const newToken = await authenticate();
       await saveInLocalStorage('trello_token', newToken);
       setToken(newToken);
 
-      const userData = await trelloService.getCurrentUser(newToken);
+      const userData = await getCurrentUser();
       setUser(userData);
 
       return true;

@@ -1,14 +1,8 @@
 /**
  * Integration tests for OAuth Authentication System
- * 
+ *
  * Purpose: Verify that users can authenticate with Trello, store tokens securely,
  * and access their account information reliably.
- * 
- * What we test:
- * - OAuth login flow
- * - Token storage and retrieval
- * - User profile fetching
- * - Complete authentication workflows
  */
 
 // Mock AsyncStorage to simulate local device storage without requiring a real device
@@ -37,13 +31,17 @@ jest.mock('expo-linking', () => ({
   createURL: jest.fn(() => 'exp://localhost:8081'),
 }));
 
-// Mock axios service to simulate API calls without hitting real endpoints
-const mockGetFromApi = jest.fn();
-const mockUpdateWithApi = jest.fn();
+// Mock the API client to simulate network calls without hitting real endpoints
+const mockGet = jest.fn();
 
-jest.mock('../services/axiosService', () => ({
-  getFromApi: (...args) => mockGetFromApi(...args),
-  updateWithApi: (...args) => mockUpdateWithApi(...args),
+jest.mock('../services/api/client', () => ({
+  __esModule: true,
+  default: {},
+  get: (...args) => mockGet(...args),
+  post: jest.fn(),
+  put: jest.fn(),
+  del: jest.fn(),
+  request: jest.fn(),
 }));
 
 // Import services after all mocks are set up
@@ -63,7 +61,7 @@ describe('OAuth Authentication System - Integration Tests', () => {
   beforeEach(() => {
     // Reset all mock functions before each test to ensure clean state
     jest.clearAllMocks();
-    
+
     // Set default mock behavior for AsyncStorage
     mockAsyncStorage.getItem.mockResolvedValue(null);
     mockAsyncStorage.setItem.mockResolvedValue(true);
@@ -73,7 +71,7 @@ describe('OAuth Authentication System - Integration Tests', () => {
   describe('OAuth Flow', () => {
     /**
      * Test successful authentication
-     * 
+     *
      * Scenario: User opens OAuth login, approves access, and gets redirected back with token
      */
     it('should authenticate user and return token', async () => {
@@ -89,14 +87,14 @@ describe('OAuth Authentication System - Integration Tests', () => {
 
       // Verify OAuth browser was opened
       expect(mockOpenAuthSessionAsync).toHaveBeenCalledTimes(1);
-      
+
       // Verify token was extracted correctly from redirect URL
       expect(token).toBe(MOCK_TOKEN);
     });
 
     /**
      * Test user cancellation
-     * 
+     *
      * Scenario: User clicks "Cancel" in OAuth browser window
      */
     it('should handle user cancellation', async () => {
@@ -110,7 +108,7 @@ describe('OAuth Authentication System - Integration Tests', () => {
 
     /**
      * Test missing token scenario
-     * 
+     *
      * Scenario: OAuth succeeds but redirect URL doesn't contain expected token
      */
     it('should handle missing token in redirect URL', async () => {
@@ -119,14 +117,14 @@ describe('OAuth Authentication System - Integration Tests', () => {
         url: 'exp://localhost:8081/--/auth', // No token in URL
       });
 
-      await expect(trelloService.authenticate()).rejects.toThrow('Token not found in redirect URL');
+      await expect(trelloService.authenticate()).rejects.toThrow('Token not found in OAuth response');
     });
   });
 
   describe('Token Storage', () => {
     /**
      * Test saving token to device
-     * 
+     *
      * Purpose: Tokens must be stored securely so users don't have to login every time
      */
     it('should save token to AsyncStorage', async () => {
@@ -142,7 +140,7 @@ describe('OAuth Authentication System - Integration Tests', () => {
 
     /**
      * Test retrieving saved token
-     * 
+     *
      * Purpose: App needs to check if user has logged in before
      */
     it('should retrieve token from AsyncStorage', async () => {
@@ -153,14 +151,14 @@ describe('OAuth Authentication System - Integration Tests', () => {
 
       // Verify correct key was queried
       expect(mockAsyncStorage.getItem).toHaveBeenCalledWith('trello_token');
-      
+
       // Verify token was parsed correctly from JSON
       expect(token).toBe(MOCK_TOKEN);
     });
 
     /**
      * Test logout token removal
-     * 
+     *
      * Purpose: When user logs out, token must be deleted from device
      */
     it('should remove token from AsyncStorage', async () => {
@@ -175,18 +173,21 @@ describe('OAuth Authentication System - Integration Tests', () => {
   describe('User Authentication', () => {
     /**
      * Test fetching user profile
-     * 
+     *
      * Purpose: After authentication, app needs to get user information
      */
     it('should fetch current user with valid token', async () => {
+      // Simulate token available in storage (used by request interceptor)
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(MOCK_TOKEN));
+
       // Simulate successful API response with user data
-      mockGetFromApi.mockResolvedValue([true, MOCK_USER]);
+      mockGet.mockResolvedValue({ success: true, data: MOCK_USER });
 
-      const user = await trelloService.getCurrentUser(MOCK_TOKEN);
+      const user = await trelloService.getCurrentUser();
 
-      // Verify API was called once with correct token
-      expect(mockGetFromApi).toHaveBeenCalledTimes(1);
-      
+      // Verify API was called once
+      expect(mockGet).toHaveBeenCalledTimes(1);
+
       // Verify returned user data matches expected structure
       expect(user).toEqual(MOCK_USER);
       expect(user.username).toBe('johndoe');
@@ -194,21 +195,23 @@ describe('OAuth Authentication System - Integration Tests', () => {
 
     /**
      * Test invalid token handling
-     * 
+     *
      * Purpose: App should handle expired or invalid tokens gracefully
      */
     it('should handle invalid token error', async () => {
-      // Simulate API returning unauthorized error
-      mockGetFromApi.mockResolvedValue([false, { error: 'Unauthorized' }]);
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify('invalid_token'));
 
-      await expect(trelloService.getCurrentUser('invalid_token')).rejects.toThrow('Failed to get user');
+      // Simulate API returning unauthorized error
+      mockGet.mockResolvedValue({ success: false, error: 'Unauthorized' });
+
+      await expect(trelloService.getCurrentUser()).rejects.toThrow('Unauthorized');
     });
   });
 
   describe('Complete Authentication Flows', () => {
     /**
      * Test full login sequence
-     * 
+     *
      * Purpose: Verify all authentication steps work together correctly
      * Steps: OAuth -> Save token -> Fetch user data
      */
@@ -231,14 +234,15 @@ describe('OAuth Authentication System - Integration Tests', () => {
       );
 
       // Step 3: User profile is fetched from API
-      mockGetFromApi.mockResolvedValue([true, MOCK_USER]);
-      const user = await trelloService.getCurrentUser(token);
+      mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify(MOCK_TOKEN));
+      mockGet.mockResolvedValue({ success: true, data: MOCK_USER });
+      const user = await trelloService.getCurrentUser();
       expect(user).toEqual(MOCK_USER);
     });
 
     /**
      * Test auto-login for returning users
-     * 
+     *
      * Purpose: Users who previously logged in should be automatically authenticated
      * Steps: Retrieve saved token -> Fetch user data
      */
@@ -249,14 +253,14 @@ describe('OAuth Authentication System - Integration Tests', () => {
       expect(token).toBe(MOCK_TOKEN);
 
       // Step 2: Use saved token to fetch user profile
-      mockGetFromApi.mockResolvedValue([true, MOCK_USER]);
-      const user = await trelloService.getCurrentUser(token);
+      mockGet.mockResolvedValue({ success: true, data: MOCK_USER });
+      const user = await trelloService.getCurrentUser();
       expect(user).toEqual(MOCK_USER);
     });
 
     /**
      * Test logout sequence
-     * 
+     *
      * Purpose: Verify user can successfully log out and token is removed
      * Steps: Remove token -> Verify token is gone
      */
